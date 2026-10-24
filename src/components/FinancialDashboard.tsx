@@ -39,6 +39,7 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({
   const [copied, setCopied] = useState(false);
   const [isMarginDropdownOpen, setIsMarginDropdownOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'order' | 'single'>(orderQuantity > 1 ? 'order' : 'single');
+  const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
 
   // Multiplier for display
   const isMulti = orderQuantity > 1;
@@ -259,101 +260,110 @@ Lợi nhuận dự kiến cả đơn:  ${formatVND(breakdown.netProfit * orderQu
       </div>
 
       {/* Detailed Cost Breakdown Card matching reference screenshot */}
-      <div className="bg-white rounded-2xl border border-[#EAE1DA] p-6 shadow-2xs space-y-4">
-        {/* Card Title */}
-        <div className="flex items-center gap-2.5 pb-2 border-b border-[#EAE1DA]/70">
-          <div className="w-7 h-7 rounded-lg bg-[#FAF7F3] text-[#B77E79] flex items-center justify-center">
-            <Receipt className="w-4 h-4" />
-          </div>
-          <div className="flex items-center justify-between w-full">
-            <h3
-              className="text-base sm:text-lg font-bold text-[#392A28]"
-            >
+      <div className="bg-white rounded-2xl border border-[#EAE1DA] shadow-2xs overflow-hidden">
+        {/* Card Title - Collapsible Header */}
+        <div 
+          onClick={() => setIsDetailsExpanded(!isDetailsExpanded)}
+          className="flex items-center justify-between p-5 sm:p-6 cursor-pointer hover:bg-[#FAF7F3]/50 transition-colors select-none"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-[#FAF7F3] text-[#B77E79] flex items-center justify-center">
+              <Receipt className="w-4 h-4" />
+            </div>
+            <h3 className="text-base sm:text-lg font-bold text-[#392A28]">
               Chi tiết chi phí
             </h3>
             {isMulti && (
-              <span className="text-[11px] font-semibold text-[#B77E79] bg-[#F4E8E4] px-2 py-0.5 rounded-md border border-[#EAE1DA]">
-                {viewMode === 'order' ? `Cả đơn (${orderQuantity} bó)` : 'Cho 1 bó'}
+              <span className="text-[10px] font-semibold text-[#B77E79] bg-[#F4E8E4] px-1.5 py-0.5 rounded border border-[#EAE1DA]">
+                {viewMode === 'order' ? 'Cả đơn' : '1 bó'}
               </span>
             )}
           </div>
+          
+          <ChevronDown 
+            className={`w-5 h-5 text-[#92827C] transition-transform duration-200 ${isDetailsExpanded ? 'rotate-180' : ''}`} 
+          />
         </div>
 
-        {/* Detailed Breakdown Rows */}
-        <div className="space-y-3 text-xs sm:text-sm">
-          {/* Tiền hoa thô */}
-          <div className="flex items-center justify-between text-[#92827C]">
-            <span>Tiền hoa thô</span>
-            <span className="tabular-nums font-semibold text-[#392A28]">
-              {formatVND(breakdown.rawFlowerCost * multiplier)}
-            </span>
-          </div>
+        {/* Detailed Breakdown Rows - Collapsible Content */}
+        {isDetailsExpanded && (
+          <div className="px-6 pb-6 pt-0 space-y-4 animate-in fade-in duration-200">
+            <div className="space-y-3 text-xs sm:text-sm pt-4 border-t border-[#EAE1DA]/70">
+              {/* Tiền hoa thô */}
+              <div className="flex items-center justify-between text-[#92827C]">
+                <span>Tiền hoa thô</span>
+                <span className="tabular-nums font-semibold text-[#392A28]">
+                  {formatVND(breakdown.rawFlowerCost * multiplier)}
+                </span>
+              </div>
 
-          {/* Hao hụt */}
-          <div className="flex items-center justify-between text-[#92827C]">
-            <span>
-              Hao hụt ({variables.wastagePercent}%)
-            </span>
-            <span className="tabular-nums font-semibold text-[#392A28]">
-              {formatVND(breakdown.wastageCost * multiplier)}
-            </span>
-          </div>
+              {/* Hao hụt */}
+              <div className="flex items-center justify-between text-[#92827C]">
+                <span>
+                  Hao hụt ({variables.wastagePercent}%)
+                </span>
+                <span className="tabular-nums font-semibold text-[#392A28]">
+                  {formatVND(breakdown.wastageCost * multiplier)}
+                </span>
+              </div>
 
-          {/* Vật tư phụ */}
-          <div className="flex items-center justify-between text-[#92827C]">
-            <span>Vật tư phụ</span>
-            <span className="tabular-nums font-semibold text-[#392A28]">
-              {formatVND(breakdown.packagingCost * multiplier)}
-            </span>
-          </div>
+              {/* Vật tư phụ */}
+              <div className="flex items-center justify-between text-[#92827C]">
+                <span>Vật tư phụ</span>
+                <span className="tabular-nums font-semibold text-[#392A28]">
+                  {formatVND(breakdown.packagingCost * multiplier)}
+                </span>
+              </div>
 
-          {/* Công cắm hoa */}
-          <div className="flex items-center justify-between text-[#92827C]">
-            <span>Công cắm hoa</span>
-            <span className="tabular-nums font-semibold text-[#392A28]">
-              {formatVND(breakdown.laborCost * multiplier)}
-            </span>
-          </div>
+              {/* Công cắm hoa */}
+              <div className="flex items-center justify-between text-[#92827C]">
+                <span>Công cắm hoa</span>
+                <span className="tabular-nums font-semibold text-[#392A28]">
+                  {formatVND(breakdown.laborCost * multiplier)}
+                </span>
+              </div>
 
-          {/* Subtle separator */}
-          <div className="pt-2 border-t border-[#EAE1DA]/70 flex items-center justify-between text-[#392A28]">
-            <span className="font-semibold">Chi phí vốn</span>
-            <span className="tabular-nums font-bold">
-              {formatVND(breakdown.cogs * multiplier)}
-            </span>
-          </div>
+              {/* Subtle separator */}
+              <div className="pt-2 border-t border-[#EAE1DA]/70 flex items-center justify-between text-[#392A28]">
+                <span className="font-semibold">Chi phí vốn</span>
+                <span className="tabular-nums font-bold">
+                  {formatVND(breakdown.cogs * multiplier)}
+                </span>
+              </div>
 
-          {/* Vận hành, ship */}
-          <div className="flex items-center justify-between text-[#92827C]">
-            <span>
-              Vận hành, ship ({variables.overheadPercent}%)
-            </span>
-            <span className="tabular-nums font-semibold text-[#392A28]">
-              {formatVND(breakdown.overheadCost * multiplier)}
-            </span>
-          </div>
+              {/* Vận hành, ship */}
+              <div className="flex items-center justify-between text-[#92827C]">
+                <span>
+                  Vận hành, ship ({variables.overheadPercent}%)
+                </span>
+                <span className="tabular-nums font-semibold text-[#392A28]">
+                  {formatVND(breakdown.overheadCost * multiplier)}
+                </span>
+              </div>
 
-          {/* Final Totals Divider */}
-          <div className="pt-3 border-t border-[#EAE1DA] space-y-2">
-            <div className="flex items-center justify-between text-[#392A28]">
-              <span className="font-bold text-sm sm:text-base">
-                {isMulti && viewMode === 'order' ? `Tổng chi phí (${orderQuantity} bó)` : 'Tổng chi phí'}
-              </span>
-              <span className="tabular-nums font-bold text-sm sm:text-base">
-                {formatVND(breakdown.totalCost * multiplier)}
-              </span>
+              {/* Final Totals Divider */}
+              <div className="pt-3 border-t border-[#EAE1DA] space-y-2">
+                <div className="flex items-center justify-between text-[#392A28]">
+                  <span className="font-bold text-sm sm:text-base">
+                    {isMulti && viewMode === 'order' ? `Tổng chi phí (${orderQuantity} bó)` : 'Tổng chi phí'}
+                  </span>
+                  <span className="tabular-nums font-bold text-sm sm:text-base">
+                    {formatVND(breakdown.totalCost * multiplier)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-[#7B8061] text-xs pt-1">
+                  <span className="font-semibold">
+                    {isMulti && viewMode === 'order' ? 'Lợi nhuận dự kiến cả đơn' : 'Lợi nhuận dự kiến'}
+                  </span>
+                  <span className="tabular-nums font-bold">
+                    +{formatVND(breakdown.netProfit * multiplier)}
+                  </span>
+                </div>
+              </div>
             </div>
-
-            <div className="flex items-center justify-between text-[#7B8061] text-xs pt-1">
-              <span className="font-semibold">
-                {isMulti && viewMode === 'order' ? 'Lợi nhuận dự kiến cả đơn' : 'Lợi nhuận dự kiến'}
-              </span>
-              <span className="tabular-nums font-bold">
-                +{formatVND(breakdown.netProfit * multiplier)}
-              </span>
-            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

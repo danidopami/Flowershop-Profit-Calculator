@@ -150,7 +150,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <p
             className="italic text-sm text-[#92827C] leading-snug"
           >
-            "Hoa nở cũng là lúc ta thăng hoa."
+            "Tiệm hoa nhỏ của 2 người iu nhau"
           </p>
           <span className="text-[10px] text-[#B77E79] tracking-wider uppercase font-medium block">
             Solelia - Tiệm Hoa Ấm Áp

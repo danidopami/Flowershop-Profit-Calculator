@@ -18,7 +18,7 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 app.use(express.json({ limit: '25mb' }));
 
 // Initialize GoogleGenAI client (Server-side only)
-const ai = new GoogleGenAI({
+const genAI = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
   httpOptions: {
     headers: {
@@ -79,13 +79,9 @@ Hãy phản hồi định dạng JSON theo đúng schema.`;
     let parsedData: any = null;
 
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [
-          {
-            text: `${systemPrompt}\n\nĐoạn văn bản người dùng nhập:\n"${prompt}"`,
-          },
-        ],
+      const response = await genAI.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: `${systemPrompt}\n\nĐoạn văn bản người dùng nhập:\n"${prompt}"`,
         config: {
           responseMimeType: 'application/json',
           responseSchema: {
@@ -323,6 +319,82 @@ function analyzeBouquetFallback(cleanBase64: string, catalogFlowers: any[]) {
     detectedFlowers: detected,
   };
 }
+
+// AI Image Vision Recipe Parsing Endpoint
+app.post('/api/gemini/analyze-bouquet-image', async (req: Request, res: Response) => {
+  try {
+    const { imageBase64, catalogFlowers = [] } = req.body;
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: 'Thiếu dữ liệu ảnh bó hoa' });
+    }
+
+    const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+
+    let catalogPromptContext = '';
+    if (Array.isArray(catalogFlowers) && catalogFlowers.length > 0) {
+      const topItems = catalogFlowers.slice(0, 150).map((f: any) =>
+        `- ID: "${f.id}" | Tên: "${f.name}"`
+      );
+      catalogPromptContext = `\nDANH MỤC HOA KHO TRÍ HẢI ĐỂ ĐỐI CHIẾU ID:\n${topItems.join('\n')}\n`;
+    }
+
+    const systemPrompt = `Bạn là chuyên gia bóc tách nguyên liệu hoa từ hình ảnh cho tiệm hoa Solelia.
+Nhiệm vụ:
+1. Nhìn vào ảnh bó hoa và nhận diện TẤT CẢ các loại hoa, lá phụ, cỏ trang trí.
+2. Ước lượng số lượng (count) và đơn vị (unit: 'cành' hoặc 'bó') cho từng loại.
+3. Đối chiếu với DANH MỤC HOA KHO TRÍ HẢI bên dưới để tìm ID (catalogFlowerId) khớp nhất. Nếu không có trong kho, để trống ID.
+4. Trả về JSON chứa summary và mảng detectedFlowers.
+
+${catalogPromptContext}
+
+CHÚ Ý: Chỉ trả về JSON. Ước lượng số lượng thực tế có trong bó hoa.`;
+
+    try {
+      const response = await genAI.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: [
+          { text: systemPrompt },
+          {
+            inlineData: {
+              data: cleanBase64,
+              mimeType: 'image/jpeg',
+            },
+          },
+        ],
+      });
+
+      const responseText = response.text || '{}';
+      // Extract JSON if model wraps it in markdown blocks
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      const parsedData = JSON.parse(jsonMatch ? jsonMatch[0] : responseText);
+      
+      // Standardize schema
+      const result = {
+        summary: parsedData.summary || 'Đã phân tích ảnh bó hoa.',
+        items: (parsedData.detectedFlowers || parsedData.items || []).map((it: any) => ({
+          catalogFlowerId: it.catalogFlowerId || '',
+          flowerName: it.flowerName || 'Hoa lạ',
+          count: it.count || 1,
+          unit: it.unit || 'cành',
+          note: it.note || 'Nhận diện từ ảnh',
+        }))
+      };
+
+      return res.json(result);
+    } catch (geminiError: any) {
+      console.warn('Gemini Vision failed, using fallback:', geminiError.message);
+      const fallback = analyzeBouquetFallback(cleanBase64, catalogFlowers);
+      return res.json({
+        summary: fallback.summary,
+        items: fallback.detectedFlowers
+      });
+    }
+  } catch (error: any) {
+    console.error('Lỗi server khi phân tích ảnh:', error);
+    return res.status(500).json({ error: 'Lỗi máy chủ khi phân tích ảnh' });
+  }
+});
 
 // Start Express server and mount Vite in development
 async function startServer() {

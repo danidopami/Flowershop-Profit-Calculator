@@ -118,12 +118,15 @@ export const CostSliders: React.FC<CostSlidersProps> = ({
                 onChange={(e) =>
                   updateVar('wastagePercent', parseInt(e.target.value) || 0)
                 }
-                className="w-full h-2 bg-[#FAF7F3] rounded-lg appearance-none cursor-pointer accent-[#B77E79]"
+                style={{
+                  background: `linear-gradient(to right, #B77E79 0%, #B77E79 ${(variables.wastagePercent / 30) * 100}%, #FAF7F3 ${(variables.wastagePercent / 30) * 100}%, #FAF7F3 100%)`,
+                }}
+                className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[#B77E79] border-none"
               />
               <div className="flex items-center justify-between text-[11px] text-[#92827C]">
                 <span className="w-20 text-left tabular-nums">0%</span>
                 <span className="flex-1 text-center font-medium text-[#392A28]">
-                  10% (Chuẩn tiệm hoa)
+                  5% (Chuẩn Solelia)
                 </span>
                 <span className="w-20 text-right tabular-nums">30%</span>
               </div>
@@ -165,12 +168,15 @@ export const CostSliders: React.FC<CostSlidersProps> = ({
                 onChange={(e) =>
                   updateVar('packagingCost', parseInt(e.target.value) || 0)
                 }
-                className="w-full h-2 bg-[#FAF7F3] rounded-lg appearance-none cursor-pointer accent-[#B77E79]"
+                style={{
+                  background: `linear-gradient(to right, #B77E79 0%, #B77E79 ${(variables.packagingCost / 200000) * 100}%, #FAF7F3 ${(variables.packagingCost / 200000) * 100}%, #FAF7F3 100%)`,
+                }}
+                className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[#B77E79] border-none"
               />
               <div className="flex items-center justify-between text-[11px] text-[#92827C]">
                 <span className="w-20 text-left tabular-nums">0₫</span>
                 <span className="flex-1 text-center font-medium text-[#392A28]">
-                  {variables.packagingCost === 0 ? '0₫ (Không phụ phí)' : '35.000₫ (Tiêu chuẩn)'}
+                  {variables.packagingCost === 0 ? '0₫ (Không phụ phí)' : '30.000₫ (Chuẩn Solelia)'}
                 </span>
                 <span className="w-20 text-right tabular-nums">200.000₫</span>
               </div>
@@ -242,7 +248,10 @@ export const CostSliders: React.FC<CostSlidersProps> = ({
                     onChange={(e) =>
                       updateVar('laborCostValue', parseInt(e.target.value) || 0)
                     }
-                    className="w-full h-2 bg-[#FAF7F3] rounded-lg appearance-none cursor-pointer accent-[#B77E79]"
+                    style={{
+                      background: `linear-gradient(to right, #B77E79 0%, #B77E79 ${(variables.laborCostValue / 300000) * 100}%, #FAF7F3 ${(variables.laborCostValue / 300000) * 100}%, #FAF7F3 100%)`,
+                    }}
+                    className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[#B77E79] border-none"
                   />
                   <div className="flex items-center justify-between text-[11px] text-[#92827C]">
                     <span className="w-20 text-left tabular-nums">0₫</span>
@@ -263,7 +272,10 @@ export const CostSliders: React.FC<CostSlidersProps> = ({
                     onChange={(e) =>
                       updateVar('laborCostValue', parseInt(e.target.value) || 0)
                     }
-                    className="w-full h-2 bg-[#FAF7F3] rounded-lg appearance-none cursor-pointer accent-[#B77E79]"
+                    style={{
+                      background: `linear-gradient(to right, #B77E79 0%, #B77E79 ${(variables.laborCostValue / 40) * 100}%, #FAF7F3 ${(variables.laborCostValue / 40) * 100}%, #FAF7F3 100%)`,
+                    }}
+                    className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[#B77E79] border-none"
                   />
                   <div className="flex items-center justify-between text-[11px] text-[#92827C]">
                     <span className="w-20 text-left tabular-nums">0%</span>
@@ -312,12 +324,15 @@ export const CostSliders: React.FC<CostSlidersProps> = ({
                 onChange={(e) =>
                   updateVar('overheadPercent', parseInt(e.target.value) || 0)
                 }
-                className="w-full h-2 bg-[#FAF7F3] rounded-lg appearance-none cursor-pointer accent-[#B77E79]"
+                style={{
+                  background: `linear-gradient(to right, #B77E79 0%, #B77E79 ${(variables.overheadPercent / 20) * 100}%, #FAF7F3 ${(variables.overheadPercent / 20) * 100}%, #FAF7F3 100%)`,
+                }}
+                className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[#B77E79] border-none"
               />
               <div className="flex items-center justify-between text-[11px] text-[#92827C]">
                 <span className="w-20 text-left tabular-nums">0%</span>
                 <span className="flex-1 text-center font-medium text-[#392A28]">
-                  5% (Tiêu chuẩn vận hành)
+                  0% (Chuẩn Solelia)
                 </span>
                 <span className="w-20 text-right tabular-nums">20%</span>
               </div>
@@ -400,7 +415,10 @@ export const CostSliders: React.FC<CostSlidersProps> = ({
                     onChange={(e) =>
                       handleMarkupChange(parseFloat(e.target.value) || 1.0)
                     }
-                    className="w-full h-2 bg-[#FAF7F3] rounded-lg appearance-none cursor-pointer accent-[#B77E79]"
+                    style={{
+                      background: `linear-gradient(to right, #B77E79 0%, #B77E79 ${((variables.markupFactor - 1) / 3) * 100}%, #FAF7F3 ${((variables.markupFactor - 1) / 3) * 100}%, #FAF7F3 100%)`,
+                    }}
+                    className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[#B77E79] border-none"
                   />
                   <div className="flex items-center justify-between text-[11px] text-[#92827C]">
                     <span className="w-20 text-left tabular-nums">x1.0</span>

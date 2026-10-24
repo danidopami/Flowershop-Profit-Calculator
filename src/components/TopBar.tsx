@@ -26,14 +26,6 @@ export const TopBar: React.FC<TopBarProps> = ({
             <Menu className="w-5 h-5" />
           </button>
         )}
-
-        <div className="hidden sm:flex items-center gap-2 text-xs text-[#92827C]">
-          <p
-            className="italic tracking-wide"
-          >
-            "Mỗi bó hoa không chỉ là món quà, mà còn là trải nghiệm cảm xúc."
-          </p>
-        </div>
       </div>
 
       {/* Right: Actions & User Profile */}

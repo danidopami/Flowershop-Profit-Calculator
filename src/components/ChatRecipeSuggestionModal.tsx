@@ -189,7 +189,7 @@ export const ChatRecipeSuggestionModal: React.FC<
                 </span>
               </div>
               <p className="text-xs text-[#92827C] mt-0.5">
-                Bóc tách tự động từ mô tả và tra cứu giá sỉ chính xác
+                Tra cứu giá sỉ chính xác từ kho Trí Hải
               </p>
             </div>
           </div>

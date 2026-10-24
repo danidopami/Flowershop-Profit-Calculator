@@ -15,6 +15,9 @@ import {
   ChevronDown,
   SlidersHorizontal,
   BookmarkPlus,
+  Camera,
+  ImageIcon,
+  Maximize2,
 } from 'lucide-react';
 import { RecipeItem, WholesaleFlowerItem } from '../types';
 import { formatVND } from '../utils/calculator';
@@ -91,6 +94,9 @@ export const RecipeBuilder: React.FC<RecipeBuilderProps> = ({
   const [isChatProcessing, setIsChatProcessing] = useState(false);
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
   const [chatSuggestionResult, setChatSuggestionResult] = useState<ChatSuggestionResult | null>(null);
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; name: string } | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Recently used flowers tracker
   const [recentFlowerIds, setRecentFlowerIds] = useState<string[]>(() => {
@@ -414,6 +420,106 @@ export const RecipeBuilder: React.FC<RecipeBuilderProps> = ({
     }
   };
 
+  // AI Image Analysis Submission
+  const handleAnalyzeImage = async (file: File) => {
+    setIsAnalyzingImage(true);
+    try {
+      // 1. Convert to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onload = () => resolve(reader.result as string);
+      });
+      reader.readAsDataURL(file);
+      const base64Data = await base64Promise;
+      const base64Image = base64Data.split(',')[1];
+
+      // 2. Call API
+      const res = await fetch('/api/gemini/analyze-bouquet-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          base64Image,
+          catalogFlowers: wholesaleCatalog.slice(0, 160).map((f) => ({
+            id: f.id,
+            name: f.name,
+            packPrice: f.packPrice,
+            packUnit: f.packUnit,
+            stemsPerPack: f.stemsPerPack,
+            unitPrice: f.unitPrice,
+          })),
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.items) && data.items.length > 0) {
+          const mappedItems: SuggestedFlowerItem[] = data.items.map((it: any, idx: number) => {
+            let matched: WholesaleFlowerItem | undefined;
+            if (it.catalogFlowerId) {
+              matched = wholesaleCatalog.find((f) => f.id === it.catalogFlowerId);
+            }
+            if (!matched && it.flowerName) {
+              const lower = it.flowerName.toLowerCase().trim();
+              matched = wholesaleCatalog.find(
+                (f) =>
+                  f.name.toLowerCase().trim() === lower ||
+                  f.name.toLowerCase().includes(lower) ||
+                  lower.includes(f.name.toLowerCase())
+              );
+            }
+
+            const unit: 'cành' | 'bó' = it.unit === 'cành' ? 'cành' : 'bó';
+            let unitPrice = 100000;
+            if (matched) {
+              unitPrice =
+                unit === 'bó'
+                  ? matched.packPrice
+                  : matched.unitPrice ||
+                    Math.round(matched.packPrice / (matched.stemsPerPack || 1));
+            }
+
+            const count = typeof it.count === 'number' && it.count > 0 ? it.count : 1;
+            const totalPrice = Math.round(count * unitPrice);
+
+            return {
+              id: `img-sug-${idx}-${Date.now()}`,
+              rawInputText: it.flowerName,
+              catalogFlowerId: matched?.id || it.catalogFlowerId || '',
+              flowerName: matched?.name || it.flowerName,
+              count,
+              unit,
+              unitPrice,
+              totalPrice,
+              selected: true,
+              matchType: (matched ? 'exact' : 'unmatched') as any,
+              matchedFlower: matched,
+              note: matched ? 'Nhận diện từ ảnh (Khớp kho)' : 'Nhận diện từ ảnh (Ngoài kho)',
+            };
+          });
+
+          const totalEstimatedCost = mappedItems.reduce((sum, it) => sum + it.totalPrice, 0);
+          const totalStems = mappedItems.reduce((sum, it) => {
+            if (it.unit === 'cành') return sum + it.count;
+            const stems = it.matchedFlower?.stemsPerPack || 10;
+            return sum + it.count * stems;
+          }, 0);
+
+          setChatSuggestionResult({
+            rawPrompt: 'AI quét ảnh bó hoa',
+            items: mappedItems,
+            totalEstimatedCost,
+            totalStems,
+          });
+          setIsSuggestionModalOpen(true);
+        }
+      }
+    } catch (e) {
+      console.error('AI Image scanning failed:', e);
+    } finally {
+      setIsAnalyzingImage(false);
+    }
+  };
+
   // Handle image upload from file
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -458,9 +564,33 @@ export const RecipeBuilder: React.FC<RecipeBuilderProps> = ({
             />
 
             <div className="absolute bottom-2.5 right-3 flex items-center gap-2">
+              <input
+                type="file"
+                ref={imageInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleAnalyzeImage(file);
+                }}
+              />
               <button
                 type="button"
-                disabled={!chatPrompt.trim() || isChatProcessing}
+                disabled={isAnalyzingImage || isChatProcessing}
+                onClick={() => imageInputRef.current?.click()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#B77E79] bg-[#FAF7F3] hover:bg-[#F4E8E4] border border-[#EAE1DA] rounded-xl transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isAnalyzingImage ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Camera className="w-3.5 h-3.5" />
+                )}
+                <span className="hidden sm:inline">Quét ảnh AI</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={!chatPrompt.trim() || isChatProcessing || isAnalyzingImage}
                 onClick={handleSendChatPrompt}
                 className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-[#B77E79] hover:bg-[#9E6965] rounded-xl transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
@@ -490,7 +620,7 @@ export const RecipeBuilder: React.FC<RecipeBuilderProps> = ({
               <Flower2 className="w-4 h-4" />
             </div>
             <h2 className="text-lg font-bold text-[#392A28]">
-              Danh sách hoa
+              Nguyên liệu
             </h2>
             <span className="text-xs text-[#92827C] font-medium">
               ({items.length} loại)
@@ -649,161 +779,257 @@ export const RecipeBuilder: React.FC<RecipeBuilderProps> = ({
           </div>
         ) : (
           /* High-end Editorial Ingredient Table */
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm">
-              <thead>
-                <tr className="border-b border-[#EAE1DA] text-[11px] font-semibold text-[#92827C] uppercase tracking-wider">
-                  <th className="pb-3 pr-4 font-semibold">Tên hoa / Nguyên liệu</th>
-                  <th className="pb-3 px-3 text-left font-semibold">Đơn giá</th>
-                  <th className="pb-3 px-3 text-center font-semibold">
-                    Số lượng
-                  </th>
-                  {orderQuantity > 1 && (
-                    <th className="pb-3 px-3 text-center font-semibold text-[#B77E79]">
-                      Tổng cả đơn ({orderQuantity} bó)
+          <div className="space-y-4">
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm">
+                <thead>
+                  <tr className="border-b border-[#EAE1DA] text-[11px] font-semibold text-[#92827C] uppercase tracking-wider">
+                    <th className="pb-3 pr-4 font-semibold">Nguyên liệu</th>
+                    <th className="pb-3 px-3 text-left font-semibold">Đơn giá</th>
+                    <th className="pb-3 px-3 text-center font-semibold">
+                      Số lượng
                     </th>
-                  )}
-                  <th className="pb-3 px-3 text-right font-semibold">
-                    {orderQuantity > 1 ? `Thành tiền (${orderQuantity} bó)` : 'Thành tiền'}
-                  </th>
-                  <th className="pb-3 pl-3 text-center w-10 font-semibold">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#EAE1DA]/70">
-                {items.map((item) => {
-                  const flower = wholesaleCatalog.find((f) => f.id === item.flowerId);
-                  const displaySpecification = flower ? flower.packUnit : item.packSpecification;
-                  const thumbnail = getFlowerThumbnail(item.flowerName, flower?.category);
-                  const totalOrderCount = Math.round(item.quantity * orderQuantity * 10) / 10;
-                  const totalOrderCost = item.totalCost * orderQuantity;
+                    {orderQuantity > 1 && (
+                      <th className="pb-3 px-3 text-center font-semibold text-[#B77E79]">
+                        Tổng cả đơn ({orderQuantity} bó)
+                      </th>
+                    )}
+                    <th className="pb-3 px-3 text-right font-semibold">
+                      {orderQuantity > 1 ? `Thành tiền (${orderQuantity} bó)` : 'Thành tiền'}
+                    </th>
+                    <th className="pb-3 pl-3 text-center w-10 font-semibold"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#EAE1DA]/70">
+                  {items.map((item) => {
+                    const flower = wholesaleCatalog.find((f) => f.id === item.flowerId);
+                    const displaySpecification = flower ? flower.packUnit : item.packSpecification;
+                    const thumbnail = getFlowerThumbnail(item.flowerName, flower?.category);
+                    const totalOrderCount = Math.round(item.quantity * orderQuantity * 10) / 10;
+                    const totalOrderCost = item.totalCost * orderQuantity;
 
-                  return (
-                    <tr
-                      key={item.id}
-                      className="hover:bg-[#FAF7F3]/60 transition-colors group"
-                    >
-                      {/* Flower Thumbnail + Name + Specification */}
-                      <td className="py-3.5 pr-4">
-                        <div className="flex items-center gap-3">
+                    return (
+                      <tr
+                        key={item.id}
+                        className="hover:bg-[#FAF7F3]/60 transition-colors group"
+                      >
+                        {/* Flower Thumbnail + Name + Specification */}
+                        <td className="py-3.5 pr-4">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="relative group/img cursor-pointer"
+                              onClick={() => setLightboxImage({ url: thumbnail, name: item.flowerName })}
+                            >
+                              <img
+                                src={thumbnail}
+                                alt={item.flowerName}
+                                className="w-11 h-11 rounded-xl object-cover border border-[#EAE1DA] shrink-0 shadow-2xs group-hover/img:brightness-90 transition-all"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity">
+                                <Maximize2 className="w-4 h-4 text-white" />
+                              </div>
+                            </div>
+                            <div className="min-w-0">
+                              <span className="font-semibold text-[#392A28] block truncate text-xs sm:text-sm">
+                                {item.flowerName}
+                              </span>
+                              <span className="text-[11px] text-[#92827C] block font-normal">
+                                {displaySpecification}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Unit Price */}
+                        <td className="py-3.5 px-3 text-left tabular-nums">
+                          <span className="font-semibold text-[#392A28]">
+                            {formatVND(item.unitPrice)}
+                          </span>
+                          <span className="text-[11px] text-[#92827C] block">
+                            /{item.unitType}
+                          </span>
+                        </td>
+
+                        {/* Quantity & Unit Stepper (for 1 bouquet) */}
+                        <td className="py-3.5 px-3 text-center">
+                          <div className="inline-flex items-center border border-[#EAE1DA] rounded-xl bg-white px-2 py-1 shadow-2xs">
+                            <input
+                              ref={(el) => {
+                                quantityInputRefs.current[item.id] = el;
+                              }}
+                              type="number"
+                              step={item.unitType === 'cành' ? '1' : '0.1'}
+                              min="0.1"
+                              value={
+                                inputStrings[item.id] !== undefined
+                                  ? inputStrings[item.id]
+                                  : item.quantity
+                              }
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setInputStrings((prev) => ({ ...prev, [item.id]: val }));
+                                if (val !== '' && !isNaN(Number(val))) {
+                                  const num = parseFloat(val);
+                                  if (num > 0) handleUpdateQuantity(item.id, num);
+                                }
+                              }}
+                              onBlur={() => {
+                                const raw = inputStrings[item.id];
+                                if (raw === undefined) return;
+                                setInputStrings((prev) => {
+                                  const updated = { ...prev };
+                                  delete updated[item.id];
+                                  return updated;
+                                });
+                                const num = parseFloat(raw);
+                                if (isNaN(num) || num <= 0) {
+                                  handleUpdateQuantity(item.id, 1);
+                                } else {
+                                  handleUpdateQuantity(item.id, num);
+                                }
+                              }}
+                              className="w-10 text-center font-bold text-[#392A28] focus:outline-none tabular-nums text-xs sm:text-sm"
+                            />
+
+                            <span className="text-[#EAE1DA] mx-1">|</span>
+
+                            <select
+                              value={item.unitType}
+                              onChange={(e) => handleSwitchUnit(item.id, e.target.value as any)}
+                              className="text-xs font-semibold text-[#92827C] hover:text-[#392A28] bg-transparent focus:outline-none cursor-pointer"
+                            >
+                              <option value="cành">cành</option>
+                              <option value="bó">bó</option>
+                            </select>
+                          </div>
+                        </td>
+
+                        {/* Total for Whole Order (when orderQuantity > 1) */}
+                        {orderQuantity > 1 && (
+                          <td className="py-3.5 px-3 text-center tabular-nums">
+                            <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#F4E8E4] border border-[#EAE1DA] text-[#392A28] font-bold text-xs sm:text-sm shadow-2xs">
+                              <span>{totalOrderCount}</span>
+                              <span className="text-[11px] font-normal text-[#92827C]">{item.unitType}</span>
+                            </div>
+                          </td>
+                        )}
+
+                        {/* Total Cost */}
+                        <td className="py-3.5 px-3 text-right tabular-nums text-xs sm:text-sm">
+                          <span className="font-bold text-[#392A28] block">
+                            {formatVND(totalOrderCost)}
+                          </span>
+                        </td>
+
+                        {/* Trash action */}
+                        <td className="py-3.5 pl-3 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(item.id)}
+                            className="p-1.5 text-[#92827C]/60 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            title="Xóa hoa"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card List View */}
+            <div className="sm:hidden space-y-3">
+              {items.map((item) => {
+                const flower = wholesaleCatalog.find((f) => f.id === item.flowerId);
+                const thumbnail = getFlowerThumbnail(item.flowerName, flower?.category);
+                const totalOrderCount = Math.round(item.quantity * orderQuantity * 10) / 10;
+                const totalOrderCost = item.totalCost * orderQuantity;
+
+                return (
+                  <div 
+                    key={item.id}
+                    className="p-3.5 bg-[#FAF7F3] rounded-2xl border border-[#EAE1DA] space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div 
+                          className="relative cursor-pointer shrink-0"
+                          onClick={() => setLightboxImage({ url: thumbnail, name: item.flowerName })}
+                        >
                           <img
                             src={thumbnail}
                             alt={item.flowerName}
-                            className="w-11 h-11 rounded-xl object-cover border border-[#EAE1DA] shrink-0 shadow-2xs"
+                            className="w-12 h-12 rounded-xl object-cover border border-[#EAE1DA] shadow-xs"
                           />
-                          <div className="min-w-0">
-                            <span className="font-semibold text-[#392A28] block truncate text-xs sm:text-sm">
-                              {item.flowerName}
-                            </span>
-                            <span className="text-[11px] text-[#92827C] block font-normal">
-                              Quy cách: {displaySpecification}
-                            </span>
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-[#392A28] text-sm truncate leading-tight">
+                            {item.flowerName}
+                          </h3>
+                          <div className="text-[11px] text-[#92827C] mt-0.5">
+                            {formatVND(item.unitPrice)}/{item.unitType}
                           </div>
                         </div>
-                      </td>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(item.id)}
+                        className="p-2 text-rose-600/60 hover:text-rose-600 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
 
-                      {/* Unit Price */}
-                      <td className="py-3.5 px-3 text-left tabular-nums">
-                        <span className="font-semibold text-[#392A28]">
-                          {formatVND(item.unitPrice)}
-                        </span>
-                        <span className="text-[11px] text-[#92827C] block">
-                          /{item.unitType}
-                        </span>
-                      </td>
-
-                      {/* Quantity & Unit Stepper (for 1 bouquet) */}
-                      <td className="py-3.5 px-3 text-center">
-                        <div className="inline-flex items-center border border-[#EAE1DA] rounded-xl bg-white px-2 py-1 shadow-2xs">
-                          <input
-                            ref={(el) => {
-                              quantityInputRefs.current[item.id] = el;
-                            }}
-                            type="number"
-                            step={item.unitType === 'cành' ? '1' : '0.1'}
-                            min="0.1"
-                            value={
-                              inputStrings[item.id] !== undefined
-                                ? inputStrings[item.id]
-                                : item.quantity
-                            }
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setInputStrings((prev) => ({ ...prev, [item.id]: val }));
-                              if (val !== '' && !isNaN(Number(val))) {
-                                const num = parseFloat(val);
-                                if (num > 0) handleUpdateQuantity(item.id, num);
-                              }
-                            }}
-                            onBlur={() => {
-                              const raw = inputStrings[item.id];
-                              if (raw === undefined) return;
-                              setInputStrings((prev) => {
-                                const updated = { ...prev };
-                                delete updated[item.id];
-                                return updated;
-                              });
-                              const num = parseFloat(raw);
-                              if (isNaN(num) || num <= 0) {
-                                handleUpdateQuantity(item.id, 1);
-                              } else {
-                                handleUpdateQuantity(item.id, num);
-                              }
-                            }}
-                            className="w-10 text-center font-bold text-[#392A28] focus:outline-none tabular-nums text-xs sm:text-sm"
-                          />
-
-                          <span className="text-[#EAE1DA] mx-1">|</span>
-
-                          {/* Unit Dropdown */}
-                          <select
-                            value={item.unitType}
-                            onChange={(e) => handleSwitchUnit(item.id, e.target.value as any)}
-                            className="text-xs font-semibold text-[#92827C] hover:text-[#392A28] bg-transparent focus:outline-none cursor-pointer"
-                          >
-                            <option value="cành">cành</option>
-                            <option value="bó">bó</option>
-                          </select>
-                        </div>
-                      </td>
-
-                      {/* Total for Whole Order (when orderQuantity > 1) */}
-                      {orderQuantity > 1 && (
-                        <td className="py-3.5 px-3 text-center tabular-nums">
-                          <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#F4E8E4] border border-[#EAE1DA] text-[#392A28] font-bold text-xs sm:text-sm shadow-2xs">
-                            <span>{totalOrderCount}</span>
-                            <span className="text-[11px] font-normal text-[#92827C]">{item.unitType}</span>
-                          </div>
-                        </td>
-                      )}
-
-                      {/* Total Cost */}
-                      <td className="py-3.5 px-3 text-right tabular-nums text-xs sm:text-sm">
-                        <span className="font-bold text-[#392A28] block">
-                          {formatVND(totalOrderCost)}
-                        </span>
-                        {orderQuantity > 1 && (
-                          <span className="text-[11px] text-[#92827C] block font-normal">
-                            ({formatVND(item.totalCost)} / bó)
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Trash action */}
-                      <td className="py-3.5 pl-3 text-center">
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveItem(item.id)}
-                          className="p-1.5 text-[#92827C]/60 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                          title="Xóa hoa"
+                    <div className="flex items-center justify-between gap-4 pt-1 border-t border-[#EAE1DA]/50">
+                      <div className="inline-flex items-center border border-[#EAE1DA] rounded-xl bg-white px-2 py-1 shadow-2xs">
+                        <button 
+                          className="p-1 text-[#B77E79]"
+                          onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Minus className="w-3 h-3" />
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        <input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => handleUpdateQuantity(item.id, parseFloat(e.target.value))}
+                          className="w-10 text-center font-bold text-[#392A28] text-xs focus:outline-none bg-transparent"
+                        />
+                        <button 
+                          className="p-1 text-[#B77E79]"
+                          onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                        <span className="text-[#EAE1DA] mx-1">|</span>
+                        <select
+                          value={item.unitType}
+                          onChange={(e) => handleSwitchUnit(item.id, e.target.value as any)}
+                          className="text-[11px] font-bold text-[#92827C] bg-transparent focus:outline-none"
+                        >
+                          <option value="cành">cành</option>
+                          <option value="bó">bó</option>
+                        </select>
+                      </div>
+
+                      <div className="text-right">
+                        <div className="text-[10px] text-[#92827C] font-medium uppercase tracking-wider mb-0.5">Thành tiền</div>
+                        <div className="font-bold text-[#392A28] text-sm tabular-nums">
+                          {formatVND(totalOrderCost)}
+                        </div>
+                        {orderQuantity > 1 && (
+                          <div className="text-[10px] text-[#B77E79] font-bold">
+                            ({totalOrderCount} {item.unitType})
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -844,6 +1070,36 @@ export const RecipeBuilder: React.FC<RecipeBuilderProps> = ({
         wholesaleCatalog={wholesaleCatalog}
         onApplySuggestions={handleApplyChatSuggestions}
       />
+
+      {/* Lightbox Modal */}
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          onClick={() => setLightboxImage(null)}
+        >
+          <div className="relative max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <button 
+              className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors z-10"
+              onClick={() => setLightboxImage(null)}
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="aspect-square sm:aspect-video overflow-hidden">
+              <img 
+                src={lightboxImage.url} 
+                alt={lightboxImage.name}
+                className="w-full h-full object-contain bg-white"
+              />
+            </div>
+            <div className="p-4 bg-white border-t border-[#EAE1DA] flex items-center justify-between">
+              <h3 className="font-bold text-[#392A28] text-lg">{lightboxImage.name}</h3>
+              <span className="px-3 py-1 bg-[#FAF7F3] border border-[#EAE1DA] rounded-full text-xs font-bold text-[#B77E79]">
+                Nguyên liệu Kho Trí Hải
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

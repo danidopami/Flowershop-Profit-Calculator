@@ -218,14 +218,14 @@ export default function App() {
     setOrderQuantity(1);
     setItems([]);
     setVariables({
-      wastagePercent: 0,
-      packagingCost: 0,
+      wastagePercent: 5,
+      packagingCost: 30000,
       laborCostType: 'fixed',
       laborCostValue: 0,
       overheadPercent: 0,
-      pricingMode: 'margin',
-      targetMarginPercent: 0,
-      markupFactor: 1.0,
+      pricingMode: 'markup',
+      targetMarginPercent: 50,
+      markupFactor: 2.0,
     });
     setRoundOption(10000);
     showToast('Đã tạo bảng tính công thức mới');
