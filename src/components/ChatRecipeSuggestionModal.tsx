@@ -171,27 +171,24 @@ export const ChatRecipeSuggestionModal: React.FC<
     .slice(0, 40);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-[#eedfd5] flex flex-col max-h-[92vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#392A28]/60 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-[#EAE1DA] flex flex-col max-h-[92vh] overflow-hidden">
         {/* Modal Header */}
-        <div className="px-5 py-4 border-b border-[#eedfd5] bg-[#faf6f2] flex items-center justify-between shrink-0">
+        <div className="px-5 py-4 border-b border-[#EAE1DA] bg-[#FAF7F3] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#5d3a3a] text-white flex items-center justify-center shadow-xs shrink-0">
-              <Sparkles className="w-5 h-5 text-amber-300" />
+            <div className="w-10 h-10 rounded-xl bg-[#392A28] text-white flex items-center justify-center shadow-xs shrink-0">
+              <Sparkles className="w-5 h-5 text-[#B77E79]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3
-                  className="text-lg sm:text-xl font-bold text-[#5d3a3a]"
-                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                >
+                <h3 className="text-lg sm:text-xl font-serif-title font-bold text-[#392A28]">
                   Gợi ý hoa từ Kho Trí Hải
                 </h3>
-                <span className="px-2 py-0.5 text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-full uppercase tracking-wider">
+                <span className="px-2 py-0.5 text-[10px] font-bold text-[#7B8061] bg-[#7B8061]/10 border border-[#7B8061]/20 rounded-full uppercase tracking-wider">
                   Trí Hải Catalog
                 </span>
               </div>
-              <p className="text-xs text-stone-500 mt-0.5">
+              <p className="text-xs text-[#92827C] mt-0.5">
                 Bóc tách tự động từ mô tả và tra cứu giá sỉ chính xác
               </p>
             </div>
@@ -199,7 +196,7 @@ export const ChatRecipeSuggestionModal: React.FC<
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-stone-400 hover:text-[#5d3a3a] hover:bg-white rounded-lg transition-colors cursor-pointer"
+            className="p-2 text-[#92827C] hover:text-[#392A28] hover:bg-white rounded-lg transition-colors cursor-pointer"
             title="Đóng"
           >
             <X className="w-5 h-5" />
@@ -207,11 +204,11 @@ export const ChatRecipeSuggestionModal: React.FC<
         </div>
 
         {/* User Prompt Display */}
-        <div className="px-5 py-3 bg-[#fdfbf9] border-b border-[#f0e4dc] flex items-center gap-2.5 text-xs text-stone-700">
-          <span className="font-semibold text-[#5d3a3a] whitespace-nowrap">
+        <div className="px-5 py-3 bg-[#FAF7F3]/60 border-b border-[#EAE1DA] flex items-center gap-2.5 text-xs text-[#392A28]">
+          <span className="font-semibold text-[#392A28] whitespace-nowrap">
             Mô tả bạn nhập:
           </span>
-          <span className="italic text-stone-600 bg-white px-2.5 py-1 rounded-md border border-[#eedfd5] truncate flex-1">
+          <span className="italic text-[#92827C] bg-white px-2.5 py-1 rounded-md border border-[#EAE1DA] truncate flex-1">
             "{suggestionResult.rawPrompt}"
           </span>
         </div>
@@ -447,21 +444,21 @@ export const ChatRecipeSuggestionModal: React.FC<
         </div>
 
         {/* Modal Footer with Human Accept / Ignore Decisions */}
-        <div className="px-5 py-4 border-t border-[#eedfd5] bg-[#faf6f2] flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+        <div className="px-5 py-4 border-t border-[#EAE1DA] bg-[#FAF7F3] flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
           {/* Subtotal & Stems Summary */}
-          <div className="flex items-center gap-4 text-xs text-stone-600 w-full sm:w-auto justify-between sm:justify-start">
+          <div className="flex items-center gap-4 text-xs text-[#92827C] w-full sm:w-auto justify-between sm:justify-start">
             <div>
               <span>Đã chọn: </span>
-              <span className="font-bold text-stone-900">
+              <span className="font-bold text-[#392A28]">
                 {selectedItems.length} loại hoa
               </span>
-              <span className="text-stone-400 ml-1">
+              <span className="text-[#92827C] ml-1">
                 (~{totalStems} cành/bó)
               </span>
             </div>
-            <div className="border-l border-stone-300 pl-3">
+            <div className="border-l border-[#EAE1DA] pl-3">
               <span>Tổng tiền kho sỉ: </span>
-              <span className="text-base font-bold text-[#5d3a3a]">
+              <span className="text-base font-bold text-[#392A28]">
                 {formatVND(totalCost)}
               </span>
             </div>
@@ -473,7 +470,7 @@ export const ChatRecipeSuggestionModal: React.FC<
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-200/60 rounded-xl transition-colors cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-[#92827C] hover:text-[#392A28] hover:bg-[#EAE1DA]/60 rounded-xl transition-colors cursor-pointer"
             >
               Bỏ qua / Hủy
             </button>
@@ -483,7 +480,7 @@ export const ChatRecipeSuggestionModal: React.FC<
               type="button"
               disabled={selectedItems.length === 0}
               onClick={() => onApplySuggestions(selectedItems, applyMode)}
-              className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-[#5d3a3a] hover:bg-[#482c2c] rounded-xl transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2 text-xs font-medium text-white bg-[#B77E79] hover:bg-[#a66e69] rounded-xl transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               <Check className="w-4 h-4" />
               <span>Áp dụng vào công thức</span>

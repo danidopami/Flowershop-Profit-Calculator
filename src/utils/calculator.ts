@@ -106,7 +106,8 @@ export function formatVND(amount: number): string {
  * Markup = 1 / (1 - Margin)
  */
 export function marginToMarkup(marginPercent: number): number {
-  const margin = Math.min(Math.max(marginPercent, 1), 95) / 100;
+  if (marginPercent <= 0) return 1.0;
+  const margin = Math.min(Math.max(marginPercent, 0), 95) / 100;
   const markup = 1 / (1 - margin);
   return Number(markup.toFixed(2));
 }

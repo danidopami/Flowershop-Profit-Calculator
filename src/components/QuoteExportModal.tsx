@@ -5,7 +5,7 @@ import {
   Calendar,
   User,
   Heart,
-  ImageIcon,
+  Package,
 } from 'lucide-react';
 import { CostVariables, FinancialBreakdown, RecipeItem } from '../types';
 import { formatVND } from '../utils/calculator';
@@ -17,6 +17,7 @@ interface QuoteExportModalProps {
   recipeName: string;
   category: string;
   photoUrl?: string;
+  orderQuantity?: number;
   items: RecipeItem[];
   variables: CostVariables;
   breakdown: FinancialBreakdown;
@@ -28,11 +29,10 @@ export const QuoteExportModal: React.FC<QuoteExportModalProps> = ({
   recipeName,
   category,
   photoUrl,
-  items,
-  variables,
+  orderQuantity = 1,
   breakdown,
 }) => {
-  const [shopName, setShopName] = useState('Tiệm Hoa Soleliá');
+  const [shopName, setShopName] = useState('Solelia - Tiệm Hoa Ấm Áp');
   const [shopPhone, setShopPhone] = useState('0963 282 807');
   const [clientName, setClientName] = useState('Khách hàng thân thiết');
   const [clientPhone, setClientPhone] = useState('');
@@ -42,7 +42,6 @@ export const QuoteExportModal: React.FC<QuoteExportModalProps> = ({
   const [cardMessage, setCardMessage] = useState(
     'Chúc bạn một ngày luôn rạng rỡ và ngập tràn hạnh phúc!'
   );
-  const [showCostBreakdownToClient, setShowCostBreakdownToClient] = useState(false);
 
   if (!isOpen) return null;
 
@@ -50,230 +49,227 @@ export const QuoteExportModal: React.FC<QuoteExportModalProps> = ({
     window.print();
   };
 
+  const unitPrice = breakdown.roundedPrice;
+  const totalPrice = unitPrice * orderQuantity;
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-[#f9f4f0] rounded-2xl max-w-3xl w-full border border-[#eedfd5] shadow-2xl overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#392A28]/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+      {/* Scaled-down compact boutique receipt modal (max-w-xl) */}
+      <div className="bg-[#FAF7F3] rounded-2xl max-w-xl w-full border border-[#EAE1DA] shadow-2xl overflow-hidden my-6 animate-in fade-in zoom-in-95 duration-200">
         {/* Header Action Bar (Hidden on print) */}
-        <div className="no-print bg-[#5d3a3a] text-white px-6 py-4 flex items-center justify-between">
+        <div className="no-print bg-[#392A28] text-white px-5 py-3 flex items-center justify-between border-b border-[#392A28]">
           <div className="flex items-center gap-2.5">
             <SoleliaLogo size="sm" showText={false} />
-            <h3 className="font-bold text-sm sm:text-base">
-              Phiếu Báo Giá &amp; Đơn Hàng Mẫu Hoa
+            <h3 className="font-serif-title font-bold text-sm sm:text-base">
+              Phiếu Báo Giá &amp; Đơn Hàng
             </h3>
           </div>
 
-          <div className="flex items-center gap-3">
-            <label className="hidden sm:flex items-center gap-2 text-xs text-[#eedfd5] cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showCostBreakdownToClient}
-                onChange={(e) => setShowCostBreakdownToClient(e.target.checked)}
-                className="rounded border-[#734848] text-[#5d3a3a] focus:ring-[#5d3a3a]"
-              />
-              <span>In đơn giá vốn nội bộ</span>
-            </label>
-
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#f9f4f0] hover:bg-white text-[#5d3a3a] transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#FAF7F3] hover:bg-white text-[#392A28] transition-colors cursor-pointer"
             >
-              <Printer className="w-4 h-4" />
+              <Printer className="w-3.5 h-3.5 text-[#B77E79]" />
               <span>In / Lưu PDF</span>
             </button>
 
             <button
               type="button"
               onClick={onClose}
-              className="p-1 text-[#eedfd5] hover:text-white rounded-lg hover:bg-[#4a2e2e] transition-colors"
+              className="p-1.5 text-[#EAE1DA] hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Printable Sheet View */}
-        <div className="p-6 sm:p-10 text-stone-800 space-y-6 bg-white" id="printable-quote">
+        {/* Printable Sheet View - Scaled & Compact */}
+        <div className="p-5 sm:p-7 text-[#392A28] space-y-4 bg-white" id="printable-quote">
           {/* Shop Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b-2 border-[#5d3a3a] pb-5 gap-4">
-            <div className="flex items-center gap-3">
-              <SoleliaLogo size="md" showText={false} />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b-2 border-[#392A28] pb-3.5 gap-3">
+            <div className="flex items-center gap-2.5">
+              <SoleliaLogo size="sm" showText={false} />
               <div>
                 <input
                   type="text"
                   value={shopName}
                   onChange={(e) => setShopName(e.target.value)}
-                  className="font-title font-bold text-2xl sm:text-3xl text-[#5d3a3a] bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#5d3a3a] focus:outline-none w-full"
-                  style={{ fontFamily: "'Noto Serif Display', Georgia, serif" }}
+                  className="font-serif-title font-bold text-xl sm:text-2xl text-[#392A28] bg-transparent border-b border-transparent hover:border-[#EAE1DA] focus:border-[#B77E79] focus:outline-none w-full"
                 />
-                <p className="text-xs text-[#7c6363] mt-0.5">
-                  Thiết kế hoa tươi nghệ thuật · Báo giá và cam kết chất lượng hoa nhập khẩu
+                <p className="text-[11px] text-[#92827C] mt-0.5">
+                  Thiết kế hoa tươi nghệ thuật · Báo giá và cam kết chất lượng hoa tươi
                 </p>
               </div>
             </div>
 
-            <div className="text-left sm:text-right text-xs text-stone-600 space-y-0.5 tabular-nums">
+            <div className="text-left sm:text-right text-[11px] text-[#92827C] space-y-0.5 tabular-nums">
               <div>
                 Hotline / Zalo:{' '}
                 <input
                   type="text"
                   value={shopPhone}
                   onChange={(e) => setShopPhone(e.target.value)}
-                  className="bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-[#5d3a3a] font-semibold"
+                  className="bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-[#392A28] font-semibold w-24 text-right"
                 />
               </div>
               <div>
                 Ngày lập:{' '}
-                <span className="font-semibold">{new Date().toLocaleDateString('vi-VN')}</span>
+                <span className="font-semibold text-[#392A28]">{new Date().toLocaleDateString('vi-VN')}</span>
               </div>
-              <div className="text-stone-400">Số phiếu: #SL-{Date.now().toString().slice(-6)}</div>
+              <div className="text-[10px] text-[#92827C]/70">Số phiếu: #SL-{Date.now().toString().slice(-6)}</div>
             </div>
           </div>
 
-          {/* Client & Event Info with Bouquet Photo */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-[#f9f4f0] rounded-xl p-4 border border-[#eedfd5] text-xs">
-            {photoUrl && (
-              <div className="sm:col-span-1 rounded-lg overflow-hidden border border-[#eedfd5] aspect-square max-h-40 bg-white">
-                <img
-                  src={photoUrl}
-                  alt={recipeName}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-
-            <div className={`space-y-1.5 ${photoUrl ? 'sm:col-span-1' : 'sm:col-span-1'}`}>
-              <div className="font-semibold text-[#5d3a3a] flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-[#7c6363]" />
+          {/* Client & Order Info Box */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#FAF7F3] rounded-xl p-3.5 border border-[#EAE1DA] text-xs">
+            <div className="space-y-1.5">
+              <div className="font-semibold text-[#392A28] flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-[#B77E79]" />
                 <span>Thông tin khách hàng:</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-stone-500 w-16">Họ tên:</span>
+                <span className="text-[#92827C] w-14 shrink-0">Họ tên:</span>
                 <input
                   type="text"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  className="bg-white border border-[#eedfd5] rounded px-2 py-1 text-stone-900 font-medium flex-1 focus:outline-none focus:ring-1 focus:ring-[#5d3a3a]"
+                  className="bg-white border border-[#EAE1DA] rounded px-2 py-0.5 text-[#392A28] font-medium flex-1 focus:outline-none focus:ring-1 focus:ring-[#B77E79]"
                 />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-stone-500 w-16">Điện thoại:</span>
+                <span className="text-[#92827C] w-14 shrink-0">Điện thoại:</span>
                 <input
                   type="text"
                   value={clientPhone}
                   onChange={(e) => setClientPhone(e.target.value)}
                   placeholder="09xx xxx xxx"
-                  className="bg-white border border-[#eedfd5] rounded px-2 py-1 text-stone-900 flex-1 focus:outline-none focus:ring-1 focus:ring-[#5d3a3a]"
+                  className="bg-white border border-[#EAE1DA] rounded px-2 py-0.5 text-[#392A28] flex-1 focus:outline-none focus:ring-1 focus:ring-[#B77E79]"
                 />
               </div>
             </div>
 
-            <div className={`space-y-1.5 ${photoUrl ? 'sm:col-span-1' : 'sm:col-span-2'}`}>
-              <div className="font-semibold text-[#5d3a3a] flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-[#7c6363]" />
-                <span>Chi tiết đơn đặt:</span>
+            <div className="space-y-1.5">
+              <div className="font-semibold text-[#392A28] flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-[#B77E79]" />
+                <span>Thông tin đơn giao:</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-stone-500 w-16">Mẫu hoa:</span>
-                <span className="font-bold text-stone-900">{recipeName}</span>
-                <span className="text-stone-400">({category})</span>
+                <span className="text-[#92827C] w-14 shrink-0">Phân loại:</span>
+                <span className="font-medium text-[#392A28]">{category}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-stone-500 w-16">Ngày giao:</span>
+                <span className="text-[#92827C] w-14 shrink-0">Ngày giao:</span>
                 <input
                   type="date"
                   value={deliveryDate}
                   onChange={(e) => setDeliveryDate(e.target.value)}
-                  className="bg-white border border-[#eedfd5] rounded px-2 py-0.5 text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#5d3a3a] tabular-nums"
+                  className="bg-white border border-[#EAE1DA] rounded px-2 py-0.5 text-[#392A28] focus:outline-none focus:ring-1 focus:ring-[#B77E79] tabular-nums"
                 />
               </div>
             </div>
           </div>
 
-          {/* Flowers Breakdown Table */}
+          {/* Clean Order Product Table (No individual flower details) */}
           <div className="space-y-2">
-            <h4 className="font-semibold text-sm text-[#5d3a3a]">
-              Định lượng hoa &amp; Nguyên liệu sử dụng
-            </h4>
-            <table className="w-full text-left text-xs border border-stone-200 rounded-lg overflow-hidden">
-              <thead className="bg-[#f9f4f0] text-[#5d3a3a] uppercase font-semibold">
-                <tr>
-                  <th className="py-2 px-3">STT</th>
-                  <th className="py-2 px-3">Chủng loại hoa &amp; Nguyên liệu</th>
-                  <th className="py-2 px-3">Quy cách</th>
-                  <th className="py-2 px-3 text-center">Số lượng</th>
-                  {showCostBreakdownToClient && (
-                    <th className="py-2 px-3 text-right">Đơn giá gốc</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-200">
-                {items.map((item, idx) => (
-                  <tr key={item.id} className="hover:bg-stone-50">
-                    <td className="py-2 px-3 text-stone-500 tabular-nums">{idx + 1}</td>
-                    <td className="py-2 px-3 font-semibold text-stone-900">
-                      {item.flowerName}
-                    </td>
-                    <td className="py-2 px-3 text-stone-600">{item.packSpecification}</td>
-                    <td className="py-2 px-3 text-center font-bold text-[#5d3a3a] tabular-nums">
-                      {item.quantity} {item.unitType}
-                    </td>
-                    {showCostBreakdownToClient && (
-                      <td className="py-2 px-3 text-right text-stone-600 tabular-nums">
-                        {formatVND(item.unitPrice)}
-                      </td>
-                    )}
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#392A28]">
+              <Package className="w-3.5 h-3.5 text-[#B77E79]" />
+              <span>Sản phẩm &amp; Báo giá</span>
+            </div>
+
+            <div className="border border-[#EAE1DA] rounded-xl overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#FAF7F3] text-[#392A28] uppercase font-semibold text-[11px] border-b border-[#EAE1DA]">
+                  <tr>
+                    <th className="py-2.5 px-3">Mẫu hoa / Sản phẩm</th>
+                    <th className="py-2.5 px-3 text-center">Số lượng</th>
+                    <th className="py-2.5 px-3 text-right">Đơn giá</th>
+                    <th className="py-2.5 px-3 text-right">Thành tiền</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-[#EAE1DA]">
+                  <tr>
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2.5">
+                        {photoUrl && (
+                          <img
+                            src={photoUrl}
+                            alt={recipeName}
+                            className="w-10 h-10 rounded-lg object-cover border border-[#EAE1DA] shrink-0"
+                          />
+                        )}
+                        <div>
+                          <div className="font-serif-title font-bold text-sm text-[#392A28]">
+                            {recipeName || 'Bó hoa tươi thiết kế'}
+                          </div>
+                          <div className="text-[11px] text-[#92827C]">
+                            Hình thức: {category}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 text-center font-bold text-[#392A28] tabular-nums">
+                      {orderQuantity} bó
+                    </td>
+                    <td className="py-3 px-3 text-right tabular-nums text-[#392A28]">
+                      {formatVND(unitPrice)}
+                    </td>
+                    <td className="py-3 px-3 text-right font-bold text-[#392A28] tabular-nums">
+                      {formatVND(totalPrice)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Card Message Note */}
-          <div className="bg-[#f9f4f0] rounded-xl p-3 border border-[#eedfd5] text-xs space-y-1">
-            <div className="font-semibold text-[#5d3a3a] flex items-center gap-1.5">
-              <Heart className="w-3.5 h-3.5 text-[#5d3a3a]" />
+          <div className="bg-[#FAF7F3] rounded-xl p-3 border border-[#EAE1DA] text-xs space-y-1">
+            <div className="font-semibold text-[#392A28] flex items-center gap-1.5">
+              <Heart className="w-3.5 h-3.5 text-[#B77E79]" />
               <span>Nội dung thiệp chúc mừng đi kèm:</span>
             </div>
             <textarea
               rows={2}
               value={cardMessage}
               onChange={(e) => setCardMessage(e.target.value)}
-              className="w-full bg-white border border-[#eedfd5] rounded-lg p-2 text-stone-800 focus:outline-none focus:ring-1 focus:ring-[#5d3a3a]"
+              className="w-full bg-white border border-[#EAE1DA] rounded-lg p-2 text-[#392A28] text-xs focus:outline-none focus:ring-1 focus:ring-[#B77E79]"
             />
           </div>
 
           {/* Price Summary & Payment */}
-          <div className="border-t-2 border-[#5d3a3a] pt-4 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div className="text-xs text-stone-500 space-y-1">
+          <div className="border-t-2 border-[#392A28] pt-3.5 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+            <div className="text-[11px] text-[#92827C] space-y-0.5">
               <p>• Hoa được bảo dưỡng trong dung dịch chuyên dụng cao cấp.</p>
-              <p>• Tặng kèm thiệp chúc mừng, túi xách cao cấp Soleliá.</p>
+              <p>• Tặng kèm thiệp chúc mừng, túi xách cao cấp Solelia.</p>
               <p>• Vui lòng đặt cọc 50% khi chốt mẫu thiết kế.</p>
             </div>
 
-            <div className="bg-[#f9f4f0] rounded-xl p-4 border border-[#eedfd5] min-w-64 text-right space-y-1">
-              <div className="text-xs font-semibold text-[#7c6363] uppercase">
+            <div className="bg-[#FAF7F3] rounded-xl p-3.5 border border-[#EAE1DA] min-w-56 text-right space-y-0.5 shrink-0">
+              <div className="text-[11px] font-semibold text-[#92827C] uppercase tracking-wider">
                 Tổng tiền thanh toán:
               </div>
-              <div className="font-title text-3xl font-extrabold text-[#5d3a3a] tabular-nums"
-                   style={{ fontFamily: "'Noto Serif Display', Georgia, serif" }}>
-                {formatVND(breakdown.roundedPrice)}
+              <div className="font-serif-title text-2xl sm:text-3xl font-bold text-[#392A28] tabular-nums">
+                {formatVND(totalPrice)}
               </div>
-              <div className="text-[11px] text-stone-500">
-                (Đã bao gồm hoa tươi, vật tư phụ và công cắm hoa)
-              </div>
+              {orderQuantity > 1 && (
+                <div className="text-[10px] text-[#92827C]">
+                  ({orderQuantity} bó x {formatVND(unitPrice)})
+                </div>
+              )}
             </div>
           </div>
 
           {/* Signatures */}
-          <div className="grid grid-cols-2 text-center text-xs pt-8 border-t border-stone-200">
+          <div className="grid grid-cols-2 text-center text-xs pt-6 border-t border-[#EAE1DA]">
             <div>
-              <p className="font-bold text-stone-800">Người đặt hoa</p>
-              <p className="text-stone-400 mt-12">(Ký và ghi rõ họ tên)</p>
+              <p className="font-bold text-[#392A28]">Người đặt hoa</p>
+              <p className="text-[#92827C] mt-10 text-[11px]">(Ký và ghi rõ họ tên)</p>
             </div>
             <div>
-              <p className="font-bold text-[#5d3a3a]">Tiệm Hoa Soleliá</p>
-              <p className="text-stone-400 mt-12">Đại diện tiệm</p>
+              <p className="font-bold text-[#392A28]">Solelia - Tiệm Hoa Ấm Áp</p>
+              <p className="text-[#92827C] mt-10 text-[11px]">Đại diện tiệm</p>
             </div>
           </div>
         </div>

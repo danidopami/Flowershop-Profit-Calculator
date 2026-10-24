@@ -150,17 +150,17 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-[#f9f4f0] rounded-2xl max-w-5xl w-full border border-[#eedfd5] shadow-2xl overflow-hidden my-6 animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#392A28]/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-[#FAF7F3] rounded-2xl max-w-5xl w-full border border-[#EAE1DA] shadow-2xl overflow-hidden my-6 animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="bg-[#5d3a3a] text-white px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+        <div className="bg-[#392A28] text-white px-6 py-4 flex items-center justify-between border-b border-[#392A28]">
+          <div className="flex items-center gap-3">
             <SoleliaLogo size="sm" showText={false} />
             <div>
-              <h3 className="font-bold text-base">
+              <h3 className="font-serif-title font-bold text-lg tracking-tight">
                 Bảng giá nhập sỉ Kho Trí Hải
               </h3>
-              <p className="text-xs text-[#eedfd5]">
+              <p className="text-xs text-[#EAE1DA]/80">
                 Cập nhật giá sỉ theo kiện, bó nhập khẩu ({catalog.length} mã hoa)
               </p>
             </div>
@@ -170,7 +170,7 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
             <button
               type="button"
               onClick={handleExportCSV}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#4a2e2e] hover:bg-[#3d2525] text-[#eedfd5] transition-colors"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-[#EAE1DA] transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Tải file CSV</span>
@@ -178,15 +178,15 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
             <button
               type="button"
               onClick={() => setShowAddForm(!showAddForm)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#f9f4f0] hover:bg-white text-[#5d3a3a] transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#FAF7F3] hover:bg-white text-[#392A28] transition-colors cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 text-[#B77E79]" />
               <span>Thêm hoa mới</span>
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="p-1 text-[#eedfd5] hover:text-white rounded-lg hover:bg-[#4a2e2e] transition-colors"
+              className="p-1.5 text-[#EAE1DA] hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -197,10 +197,10 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
         {showAddForm && (
           <form
             onSubmit={handleAddNewFlower}
-            className="p-5 bg-white border-b border-[#eedfd5] space-y-3 text-xs"
+            className="p-5 bg-white border-b border-[#EAE1DA] space-y-3 text-xs"
           >
-            <div className="font-bold text-sm text-[#5d3a3a] flex items-center gap-2">
-              <Plus className="w-4 h-4" />
+            <div className="font-serif-title font-bold text-sm text-[#392A28] flex items-center gap-2">
+              <Plus className="w-4 h-4 text-[#B77E79]" />
               <span>Thêm loại hoa mới vào danh mục kho</span>
             </div>
 
@@ -301,14 +301,14 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
               <div className="flex items-end gap-2">
                 <button
                   type="submit"
-                  className="w-full bg-[#5d3a3a] hover:bg-[#4a2e2e] text-white font-bold py-2 rounded-lg transition-colors"
+                  className="w-full bg-[#B77E79] hover:bg-[#a66e69] text-white font-medium py-2 rounded-lg transition-colors cursor-pointer"
                 >
                   Lưu hoa
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="px-3 bg-stone-200 hover:bg-stone-300 text-stone-700 py-2 rounded-lg"
+                  className="px-3 bg-[#FAF7F3] hover:bg-[#EAE1DA] text-[#92827C] py-2 rounded-lg cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -318,16 +318,16 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
         )}
 
         {/* Filter Toolbar */}
-        <div className="p-4 sm:p-5 border-b border-[#eedfd5] bg-white space-y-3">
+        <div className="p-4 sm:p-5 border-b border-[#EAE1DA] bg-white space-y-3">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3 top-3 text-[#7c6363]" />
+              <Search className="w-4 h-4 absolute left-3 top-3 text-[#92827C]" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Tìm loại hoa theo tên, chữ Hán, danh mục..."
-                className="w-full pl-9 pr-4 py-2 text-sm bg-[#f9f4f0] border border-[#eedfd5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5d3a3a]/20 focus:border-[#5d3a3a]"
+                className="w-full pl-9 pr-4 py-2 text-sm bg-[#FAF7F3] border border-[#EAE1DA] rounded-xl text-[#392A28] placeholder-[#92827C] focus:outline-none focus:ring-2 focus:ring-[#B77E79]/30 focus:border-[#B77E79]"
               />
             </div>
 
@@ -336,25 +336,25 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
                 type="button"
                 onClick={onResetCatalog}
                 title="Khôi phục bảng giá mặc định ban đầu"
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#5d3a3a] bg-[#f9f4f0] border border-[#eedfd5] hover:bg-[#ebdcd3] rounded-xl transition-colors whitespace-nowrap"
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#392A28] bg-[#FAF7F3] border border-[#EAE1DA] hover:bg-[#F4E8E4] rounded-xl transition-colors whitespace-nowrap cursor-pointer"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
+                <RotateCcw className="w-3.5 h-3.5 text-[#B77E79]" />
                 <span>Đặt lại bảng giá gốc</span>
               </button>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-            <span className="text-stone-400 text-[11px] font-medium mr-1">Xuất xứ:</span>
+            <span className="text-[#92827C] text-[11px] font-medium mr-1">Xuất xứ:</span>
             {origins.map((orig) => (
               <button
                 key={orig}
                 type="button"
                 onClick={() => setSelectedOrigin(orig)}
-                className={`px-3 py-1 rounded-lg font-medium transition-colors ${
+                className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
                   selectedOrigin === orig
-                    ? 'bg-[#5d3a3a] text-white shadow-xs'
-                    : 'bg-[#f9f4f0] text-[#6e5454] border border-[#eedfd5] hover:bg-[#ebdcd3]'
+                    ? 'bg-[#392A28] text-white shadow-xs'
+                    : 'bg-[#FAF7F3] text-[#92827C] border border-[#EAE1DA] hover:bg-[#F4E8E4] hover:text-[#392A28]'
                 }`}
               >
                 {orig}
@@ -365,9 +365,9 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
 
         {/* Table */}
         <div className="p-4 sm:p-6 max-h-[55vh] overflow-y-auto">
-          <div className="overflow-x-auto border border-[#eedfd5] rounded-xl bg-white">
-            <table className="w-full text-left text-xs divide-y divide-[#eedfd5]">
-              <thead className="bg-[#f9f4f0] text-[#5d3a3a] font-semibold uppercase tracking-wider">
+          <div className="overflow-x-auto border border-[#EAE1DA] rounded-xl bg-white">
+            <table className="w-full text-left text-xs divide-y divide-[#EAE1DA]">
+              <thead className="bg-[#FAF7F3] text-[#392A28] font-semibold uppercase tracking-wider">
                 <tr>
                   <th className="py-2.5 px-3">Tên hoa &amp; Xuất xứ</th>
                   <th className="py-2.5 px-3">Danh mục</th>
@@ -378,23 +378,23 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
                   <th className="py-2.5 px-3 text-center w-16">Sửa giá</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#f3e9e2] bg-white font-sans">
+              <tbody className="divide-y divide-[#EAE1DA] bg-white font-sans">
                 {filteredCatalog.map((item) => (
                   <tr
                     key={item.id}
-                    className="hover:bg-[#f9f4f0]/60 transition-colors"
+                    className="hover:bg-[#FAF7F3] transition-colors"
                   >
                     <td className="py-2.5 px-3">
-                      <div className="font-semibold text-stone-900">
+                      <div className="font-semibold text-[#392A28]">
                         {item.name}
                         {item.isCustom && (
-                          <span className="ml-1.5 text-[10px] text-[#5d3a3a] bg-[#f9f4f0] border border-[#eedfd5] px-1.5 py-0.5 rounded font-normal">
+                          <span className="ml-1.5 text-[10px] text-[#B77E79] bg-[#F4E8E4] border border-[#EAE1DA] px-1.5 py-0.5 rounded font-normal">
                             Tự thêm
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5 text-[11px] text-stone-400 mt-0.5">
-                        <span className="text-[#5d3a3a] font-medium">{item.origin}</span>
+                      <div className="flex items-center gap-1.5 text-[11px] text-[#92827C] mt-0.5">
+                        <span className="text-[#392A28] font-medium">{item.origin}</span>
                         {item.originalChineseName && (
                           <>
                             <span>·</span>
@@ -404,16 +404,16 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
                       </div>
                     </td>
 
-                    <td className="py-2.5 px-3 text-stone-600 font-medium">
+                    <td className="py-2.5 px-3 text-[#92827C] font-medium">
                       {item.category}
                     </td>
 
-                    <td className="py-2.5 px-3 text-stone-600">
+                    <td className="py-2.5 px-3 text-[#92827C]">
                       {item.packUnit}
                     </td>
 
                     {/* Pack Price */}
-                    <td className="py-2.5 px-3 text-right font-mono font-bold text-stone-900 tabular-nums">
+                    <td className="py-2.5 px-3 text-right font-mono font-bold text-[#392A28] tabular-nums">
                       {editingId === item.id ? (
                         <input
                           type="number"
@@ -422,7 +422,7 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
                           onChange={(e) =>
                             setEditPrice(parseInt(e.target.value) || 0)
                           }
-                          className="w-24 px-1 py-0.5 text-right font-mono font-bold bg-white border border-[#5d3a3a] rounded"
+                          className="w-24 px-1 py-0.5 text-right font-mono font-bold bg-white border border-[#B77E79] rounded"
                         />
                       ) : (
                         formatVND(item.packPrice)
@@ -430,7 +430,7 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
                     </td>
 
                     {/* Stems */}
-                    <td className="py-2.5 px-3 text-center font-mono tabular-nums text-stone-700">
+                    <td className="py-2.5 px-3 text-center font-mono tabular-nums text-[#392A28]">
                       {editingId === item.id ? (
                         <input
                           type="number"
@@ -439,7 +439,7 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
                           onChange={(e) =>
                             setEditStems(parseInt(e.target.value) || 1)
                           }
-                          className="w-12 px-1 py-0.5 text-center font-mono bg-white border border-[#5d3a3a] rounded"
+                          className="w-12 px-1 py-0.5 text-center font-mono bg-white border border-[#B77E79] rounded"
                         />
                       ) : (
                         item.stemsPerPack
@@ -447,7 +447,7 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
                     </td>
 
                     {/* Unit Price */}
-                    <td className="py-2.5 px-3 text-right font-mono font-extrabold text-[#5d3a3a] tabular-nums">
+                    <td className="py-2.5 px-3 text-right font-mono font-bold text-[#B77E79] tabular-nums">
                       {editingId === item.id
                         ? formatVND(
                             Math.round(editPrice / Math.max(1, editStems))
@@ -461,7 +461,7 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
                         <button
                           type="button"
                           onClick={() => handleSaveEdit(item.id)}
-                          className="p-1 text-[#5d3a3a] hover:text-[#4a2e2e] bg-[#ebdcd3] rounded"
+                          className="p-1 text-white bg-[#B77E79] hover:bg-[#a66e69] rounded cursor-pointer"
                           title="Lưu giá mới"
                         >
                           <Check className="w-4 h-4" />
@@ -470,7 +470,7 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
                         <button
                           type="button"
                           onClick={() => handleStartEdit(item)}
-                          className="p-1 text-stone-400 hover:text-[#5d3a3a] rounded hover:bg-[#f9f4f0]"
+                          className="p-1 text-[#92827C] hover:text-[#392A28] rounded hover:bg-[#FAF7F3] cursor-pointer"
                           title="Sửa giá nhập"
                         >
                           <Edit2 className="w-3.5 h-3.5" />

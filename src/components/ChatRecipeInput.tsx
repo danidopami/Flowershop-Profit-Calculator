@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquare, Sparkles, Send, ArrowRight, CornerDownLeft } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 import { WholesaleFlowerItem } from '../types';
 import { parseChatRecipe, ChatSuggestionResult } from '../utils/chatRecipeParser';
 
@@ -14,14 +14,6 @@ export const ChatRecipeInput: React.FC<ChatRecipeInputProps> = ({
 }) => {
   const [promptText, setPromptText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-
-  // Quick preset sample prompts that florists frequently use
-  const samplePrompts = [
-    'trong ảnh dùng 1 bó hồng cam Balcony, 1 bó cỏ đồng tiền, 1 bó lá bạc',
-    '10 cành Calla Lily Cam, 2 bó Cát Tường Tròn Trắng, 1 bó Lá Bạc Nhỏ',
-    '2 bó Cúc Daisy Trắng, 1 bó Baby Trắng Bông Nhỡ, 1 bó Cỏ Sao Xanh',
-    '5 cành Hoa Huệ Tây Amaryllis Đỏ, 1 bó Lan Tiên Trắng, 1 bó Lá Bạc To',
-  ];
 
   const handleParsePrompt = async (textToParse?: string) => {
     const text = (textToParse !== undefined ? textToParse : promptText).trim();
@@ -133,82 +125,35 @@ export const ChatRecipeInput: React.FC<ChatRecipeInputProps> = ({
   };
 
   return (
-    <div className="bg-[#faf6f2] border border-[#eedfd5] rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-[#5d3a3a]">
-          <MessageSquare className="w-4 h-4 text-[#8c6b6b]" />
-          <h3
-            className="text-sm sm:text-base font-bold tracking-tight font-title"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-          >
-            Nhập công thức dạng chat / văn bản
-          </h3>
-          <span className="text-[10px] px-2 py-0.5 bg-[#f0e4dc] text-[#5d3a3a] font-semibold rounded-md">
-            Gợi ý Kho Trí Hải
-          </span>
-        </div>
-        <span className="text-xs text-stone-500">
-          Nhập tự do danh sách hoa bạn nhìn thấy hoặc dự định cắm
-        </span>
-      </div>
+    <div className="relative bg-white rounded-2xl border border-[#eedfd5] focus-within:border-[#5d3a3a] focus-within:ring-2 focus-within:ring-[#5d3a3a]/15 transition-all shadow-xs overflow-hidden">
+      <textarea
+        rows={2}
+        value={promptText}
+        onChange={(e) => setPromptText(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Gõ hoặc dán danh sách hoa (ví dụ: trong ảnh dùng 1 bó hồng cam Balcony, 1 bó cỏ đồng tiền, 1 bó lá bạc)..."
+        className="w-full px-4 pt-3.5 pb-12 text-sm text-stone-800 placeholder-stone-400 bg-transparent resize-none focus:outline-none"
+      />
 
-      {/* Textarea Input Container */}
-      <div className="relative bg-white rounded-xl border border-[#eedfd5] focus-within:border-[#5d3a3a] focus-within:ring-1 focus-within:ring-[#5d3a3a] transition-all overflow-hidden shadow-2xs">
-        <textarea
-          rows={2}
-          value={promptText}
-          onChange={(e) => setPromptText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ví dụ: trong ảnh dùng 1 bó hồng cam Balcony, 1 bó cỏ đồng tiền, 1 bó lá bạc..."
-          className="w-full px-3.5 pt-3 pb-10 text-sm text-stone-800 placeholder-stone-400 bg-transparent resize-none focus:outline-none"
-        />
-
-        {/* Bottom Toolbar inside input */}
-        <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between pointer-events-none">
-          <span className="text-[10px] text-stone-400 hidden sm:inline">
-            Nhấn <kbd className="px-1 py-0.5 bg-stone-100 rounded border border-stone-200">Enter</kbd> để tạo gợi ý
-          </span>
-          <button
-            type="button"
-            disabled={!promptText.trim() || isProcessing}
-            onClick={() => handleParsePrompt()}
-            className="pointer-events-auto ml-auto inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white bg-[#5d3a3a] hover:bg-[#482c2c] rounded-lg transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-          >
-            {isProcessing ? (
-              <>
-                <Sparkles className="w-3.5 h-3.5 animate-spin" />
-                <span>Đang tra giá...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>Xem gợi ý hoa</span>
-                <Send className="w-3 h-3 ml-0.5" />
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Quick Prompts Chips */}
-      <div className="flex items-center gap-2 flex-wrap pt-1">
-        <span className="text-[11px] font-medium text-stone-500 shrink-0">
-          Mẫu thử nhanh:
-        </span>
-        {samplePrompts.map((sample, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => {
-              setPromptText(sample);
-              handleParsePrompt(sample);
-            }}
-            className="text-[11px] px-2.5 py-1 rounded-lg bg-white hover:bg-[#f2e6de] border border-[#eedfd5] text-stone-700 hover:text-[#5d3a3a] transition-colors truncate max-w-[280px] sm:max-w-none cursor-pointer"
-            title={sample}
-          >
-            {sample}
-          </button>
-        ))}
+      <div className="absolute bottom-2.5 right-3 flex items-center justify-end">
+        <button
+          type="button"
+          disabled={!promptText.trim() || isProcessing}
+          onClick={() => handleParsePrompt()}
+          className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-[#5d3a3a] hover:bg-[#3d2727] rounded-xl transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+        >
+          {isProcessing ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Đang gửi...</span>
+            </>
+          ) : (
+            <>
+              <span>Gửi</span>
+              <Send className="w-3 h-3" />
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

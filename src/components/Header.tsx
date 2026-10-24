@@ -1,6 +1,5 @@
 import React from 'react';
-import { BookmarkCheck, Database, Calculator, PlusCircle } from 'lucide-react';
-import { SoleliaLogo } from './SoleliaLogo';
+import { BookmarkCheck, Database, Calculator, Plus } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: 'calculator' | 'library' | 'catalog';
@@ -18,83 +17,95 @@ export const Header: React.FC<HeaderProps> = ({
   onNewRecipe,
 }) => {
   return (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#eedfd5]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-18 gap-6">
-          {/* Solelia Logo & Brand Presentation */}
-          <div
-            className="flex items-center gap-3 cursor-pointer select-none py-1 group"
-            onClick={() => setActiveTab('calculator')}
-          >
-            <img
-              src="/assets/aistudio/Solelia_Logo_a5167299.png"
-              alt="Soleliá"
-              className="h-12 sm:h-14 w-auto object-contain shrink-0 group-hover:scale-105 transition-transform"
-            />
-            <div className="flex flex-col border-l border-[#eedfd5] pl-3 py-0.5">
-              <span
-                className="text-sm sm:text-base font-bold tracking-wide text-[#5d3a3a] leading-tight"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-              >
-                Bảng tính giá hoa
-              </span>
-              <span className="text-[10px] text-[#8c6b6b] tracking-wider uppercase font-medium">
-                Kho Sỉ Trí Hải
-              </span>
-            </div>
-          </div>
-
-          {/* Navigation Tabs - Quiet Underline instead of filled dark pill */}
-          <nav className="flex items-center gap-4 sm:gap-6 h-full">
-            <button
-              onClick={() => setActiveTab('calculator')}
-              className={`flex items-center gap-1.5 py-5 text-sm transition-colors whitespace-nowrap border-b-2 ${
-                activeTab === 'calculator'
-                  ? 'border-[#5d3a3a] text-[#5d3a3a] font-bold'
-                  : 'border-transparent text-stone-500 hover:text-[#5d3a3a] font-medium'
-              }`}
-            >
-              <Calculator className="w-4 h-4" />
-              <span>Tính giá bó hoa</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('library')}
-              className={`flex items-center gap-1.5 py-5 text-sm transition-colors whitespace-nowrap border-b-2 ${
-                activeTab === 'library'
-                  ? 'border-[#5d3a3a] text-[#5d3a3a] font-bold'
-                  : 'border-transparent text-stone-500 hover:text-[#5d3a3a] font-medium'
-              }`}
-            >
-              <BookmarkCheck className="w-4 h-4" />
-              <span>Mẫu đã lưu ({savedCount})</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('catalog')}
-              className={`flex items-center gap-1.5 py-5 text-sm transition-colors whitespace-nowrap border-b-2 ${
-                activeTab === 'catalog'
-                  ? 'border-[#5d3a3a] text-[#5d3a3a] font-bold'
-                  : 'border-transparent text-stone-500 hover:text-[#5d3a3a] font-medium'
-              }`}
-            >
-              <Database className="w-4 h-4" />
-              <span>Giá kho sỉ ({catalogCount})</span>
-            </button>
-          </nav>
-
-          {/* Single Subtle Secondary Action in Header */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={onNewRecipe}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[#5d3a3a] hover:bg-[#f9f4f0] rounded-xl transition-colors whitespace-nowrap"
-            >
-              <PlusCircle className="w-4 h-4 text-[#5d3a3a]" />
-              <span className="hidden sm:inline">Tạo mẫu mới</span>
-            </button>
+    <div className="sticky top-3 z-40 max-w-6xl mx-auto px-3 sm:px-6">
+      <header className="bg-white/75 backdrop-blur-xl border border-white/80 shadow-lg shadow-stone-900/5 rounded-full px-4 sm:px-6 py-2 flex items-center justify-between gap-4 transition-all">
+        {/* Solelia Logo & Brand Name */}
+        <div
+          className="flex items-center gap-3 cursor-pointer select-none group shrink-0"
+          onClick={() => setActiveTab('calculator')}
+        >
+          <img
+            src="/assets/aistudio/Solelia_Logo_a5167299.png"
+            alt="Soleliá"
+            className="h-10 sm:h-11 w-auto object-contain shrink-0 group-hover:scale-105 transition-transform"
+          />
+          <div className="flex flex-col border-l border-stone-200/80 pl-3 py-0.5 leading-tight">
+            <span className="text-xs sm:text-sm font-bold text-[#3b2828] tracking-tight">
+              Bảng tính giá hoa
+            </span>
+            <span className="text-[10px] sm:text-[11px] text-stone-500 font-medium">
+              Tiệm hoa ấm áp
+            </span>
           </div>
         </div>
-      </div>
-    </header>
+
+        {/* Navigation Tabs - Modern Pill Style */}
+        <nav className="flex items-center gap-1 sm:gap-2">
+          {/* Tab 1: Tính giá */}
+          <button
+            onClick={() => setActiveTab('calculator')}
+            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'calculator'
+                ? 'bg-[#3b2828] text-white shadow-xs font-semibold'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100/60'
+            }`}
+          >
+            <Calculator className="w-3.5 h-3.5" />
+            <span>Tính giá</span>
+          </button>
+
+          {/* Tab 2: Mẫu (with Facebook-style notification badge) */}
+          <button
+            onClick={() => setActiveTab('library')}
+            className={`relative flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'library'
+                ? 'bg-[#3b2828] text-white shadow-xs font-semibold'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100/60'
+            }`}
+          >
+            <BookmarkCheck className="w-3.5 h-3.5" />
+            <span className="relative">
+              Mẫu
+              {savedCount > 0 && (
+                <span className="absolute -top-1.5 -right-3.5 min-w-[17px] h-[17px] px-1 bg-rose-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none shadow-xs border-2 border-white animate-in zoom-in-50">
+                  {savedCount}
+                </span>
+              )}
+            </span>
+          </button>
+
+          {/* Tab 3: Giá sỉ (with Facebook-style notification badge) */}
+          <button
+            onClick={() => setActiveTab('catalog')}
+            className={`relative flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'catalog'
+                ? 'bg-[#3b2828] text-white shadow-xs font-semibold'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100/60'
+            }`}
+          >
+            <Database className="w-3.5 h-3.5" />
+            <span className="relative">
+              Giá sỉ
+              {catalogCount > 0 && (
+                <span className="absolute -top-1.5 -right-4 min-w-[17px] h-[17px] px-1 bg-stone-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none shadow-xs border-2 border-white">
+                  {catalogCount}
+                </span>
+              )}
+            </span>
+          </button>
+        </nav>
+
+        {/* Right Action Button - Dark rounded-full pill button */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={onNewRecipe}
+            className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 text-xs font-semibold text-white bg-[#251717] hover:bg-[#3d2727] rounded-full transition-all shadow-xs shrink-0 cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Tạo mẫu mới</span>
+          </button>
+        </div>
+      </header>
+    </div>
   );
 };

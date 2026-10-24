@@ -26,14 +26,11 @@ export const SoleliaLogo: React.FC<SoleliaLogoProps> = ({
       />
       {showText && (
         <div className="flex flex-col leading-none">
-          <span
-            className="font-title text-lg sm:text-xl font-bold tracking-wider text-[#5d3a3a] uppercase"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-          >
-            Soleliá
+          <span className="font-serif-title text-base sm:text-lg font-bold tracking-wider text-[#392A28] uppercase">
+            Solelia
           </span>
-          <span className="text-[10px] text-[#7c6363] tracking-widest uppercase font-medium mt-0.5">
-            Tiệm Hoa Nghệ Thuật
+          <span className="text-[10px] text-[#92827C] tracking-wide font-medium mt-0.5">
+            Tiệm Hoa Ấm Áp
           </span>
         </div>
       )}
