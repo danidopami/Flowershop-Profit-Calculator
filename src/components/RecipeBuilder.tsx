@@ -438,7 +438,7 @@ export const RecipeBuilder: React.FC<RecipeBuilderProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          base64Image,
+          imageBase64: base64Image,
           catalogFlowers: wholesaleCatalog.slice(0, 160).map((f) => ({
             id: f.id,
             name: f.name,
@@ -805,7 +805,7 @@ export const RecipeBuilder: React.FC<RecipeBuilderProps> = ({
                   {items.map((item) => {
                     const flower = wholesaleCatalog.find((f) => f.id === item.flowerId);
                     const displaySpecification = flower ? flower.packUnit : item.packSpecification;
-                    const thumbnail = getFlowerThumbnail(item.flowerName, flower?.category);
+                    const thumbnail = flower?.imageUrl || getFlowerThumbnail(item.flowerName, flower?.category);
                     const totalOrderCount = Math.round(item.quantity * orderQuantity * 10) / 10;
                     const totalOrderCost = item.totalCost * orderQuantity;
 
@@ -944,7 +944,7 @@ export const RecipeBuilder: React.FC<RecipeBuilderProps> = ({
             <div className="sm:hidden space-y-3">
               {items.map((item) => {
                 const flower = wholesaleCatalog.find((f) => f.id === item.flowerId);
-                const thumbnail = getFlowerThumbnail(item.flowerName, flower?.category);
+                const thumbnail = flower?.imageUrl || getFlowerThumbnail(item.flowerName, flower?.category);
                 const totalOrderCount = Math.round(item.quantity * orderQuantity * 10) / 10;
                 const totalOrderCost = item.totalCost * orderQuantity;
 

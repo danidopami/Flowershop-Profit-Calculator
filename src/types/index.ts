@@ -29,7 +29,13 @@ export interface WholesaleFlowerItem {
   stemsPerPack: number;
   unitPrice: number;
   note?: string;
+  review?: string;
+  supplier?: string;
+  priceDate?: string;
+  section?: string;
+  page?: string;
   isCustom?: boolean;
+  isMissingInLatestImport?: boolean;
 }
 
 export interface RecipeItem {
@@ -56,6 +62,7 @@ export interface CostVariables {
   pricingMode: PricingMode; // 'margin' | 'markup'
   targetMarginPercent: number; // 20% - 70%
   markupFactor: number; // 1.5x - 4.0x
+  shippingCost?: number; // Added for user request
 }
 
 export interface FinancialBreakdown {

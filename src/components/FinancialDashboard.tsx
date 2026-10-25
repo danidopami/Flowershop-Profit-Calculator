@@ -333,22 +333,34 @@ Lợi nhuận dự kiến cả đơn:  ${formatVND(breakdown.netProfit * orderQu
 
               {/* Vận hành, ship */}
               <div className="flex items-center justify-between text-[#92827C]">
-                <span>
-                  Vận hành, ship ({variables.overheadPercent}%)
-                </span>
+                <div className="flex items-center gap-2">
+                  <span>Ship & Vận hành ({variables.overheadPercent}%)</span>
+                </div>
                 <span className="tabular-nums font-semibold text-[#392A28]">
                   {formatVND(breakdown.overheadCost * multiplier)}
                 </span>
+              </div>
+
+              {/* Added Shipping Fee Input */}
+              <div className="flex items-center justify-between text-[#B77E79] font-bold py-1 border-y border-[#EAE1DA]/30">
+                <span className="text-[11px] uppercase tracking-wider">Tiền ship khách trả (đ)</span>
+                <input
+                  type="number"
+                  step="1000"
+                  value={variables.shippingCost || 0}
+                  onChange={(e) => setVariables(prev => ({ ...prev, shippingCost: parseInt(e.target.value) || 0 }))}
+                  className="w-24 bg-[#FAF7F3] border border-[#EAE1DA] rounded px-2 py-1 text-right focus:outline-none focus:ring-1 focus:ring-[#B77E79] tabular-nums"
+                />
               </div>
 
               {/* Final Totals Divider */}
               <div className="pt-3 border-t border-[#EAE1DA] space-y-2">
                 <div className="flex items-center justify-between text-[#392A28]">
                   <span className="font-bold text-sm sm:text-base">
-                    {isMulti && viewMode === 'order' ? `Tổng chi phí (${orderQuantity} bó)` : 'Tổng chi phí'}
+                    {isMulti && viewMode === 'order' ? `Tổng cộng (${orderQuantity} bó + ship)` : 'Tổng thanh toán (+ ship)'}
                   </span>
                   <span className="tabular-nums font-bold text-sm sm:text-base">
-                    {formatVND(breakdown.totalCost * multiplier)}
+                    {formatVND((breakdown.roundedPrice * multiplier) + (variables.shippingCost || 0) * (viewMode === 'order' ? 1 : 1/orderQuantity))}
                   </span>
                 </div>
 

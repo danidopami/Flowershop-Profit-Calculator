@@ -394,7 +394,10 @@ export const CostSliders: React.FC<CostSlidersProps> = ({
                     onChange={(e) =>
                       handleMarginChange(parseInt(e.target.value) || 0)
                     }
-                    className="w-full h-2 bg-[#FAF7F3] rounded-lg appearance-none cursor-pointer accent-[#B77E79]"
+                    style={{
+                      background: `linear-gradient(to right, #B77E79 0%, #B77E79 ${(variables.targetMarginPercent / 75) * 100}%, #FAF7F3 ${(variables.targetMarginPercent / 75) * 100}%, #FAF7F3 100%)`,
+                    }}
+                    className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[#B77E79] border-none"
                   />
                   <div className="flex items-center justify-between text-[11px] text-[#92827C]">
                     <span className="w-20 text-left tabular-nums">0%</span>

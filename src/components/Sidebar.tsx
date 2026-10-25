@@ -86,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               Solelia
             </span>
             <span className="text-[10px] text-[#92827C] tracking-wide font-medium">
-              Tiệm Hoa Ấm Áp
+              Tiệm hoa nhỏ của 2 người iu nhau
             </span>
           </div>
         </div>
@@ -125,7 +125,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     active ? 'text-[#B77E79]' : 'text-[#92827C]'
                   }`}
                 />
-                <span>{item.label}</span>
+                <span>{item.label === 'Giá hoa' ? 'Nguyên liệu' : item.label}</span>
               </div>
 
               {item.badge !== undefined && item.badge > 0 && (
@@ -153,7 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             "Tiệm hoa nhỏ của 2 người iu nhau"
           </p>
           <span className="text-[10px] text-[#B77E79] tracking-wider uppercase font-medium block">
-            Solelia - Tiệm Hoa Ấm Áp
+            Solelia Studio
           </span>
         </div>
 

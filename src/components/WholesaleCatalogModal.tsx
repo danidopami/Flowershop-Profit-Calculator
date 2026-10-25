@@ -7,10 +7,17 @@ import {
   Check,
   RotateCcw,
   Download,
+  Upload,
+  AlertCircle,
+  Clock,
+  ChevronRight,
+  Info,
 } from 'lucide-react';
 import { WholesaleFlowerItem, FlowerCategory, FlowerOrigin } from '../types';
 import { formatVND } from '../utils/calculator';
 import { SoleliaLogo } from './SoleliaLogo';
+import { FlowerIcon } from './FlowerIcon';
+import { parseCSV, normalizeString } from '../utils/csvParser';
 
 interface WholesaleCatalogModalProps {
   isOpen: boolean;
@@ -34,6 +41,18 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
   const [editPrice, setEditPrice] = useState<number>(0);
   const [editStems, setEditStems] = useState<number>(1);
   const [showAddForm, setShowAddForm] = useState(false);
+  
+  // Import State
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<{
+    newItems: WholesaleFlowerItem[];
+    priceChangedItems: Array<{ item: WholesaleFlowerItem; oldPrice: number; newPrice: number }>;
+    unchangedCount: number;
+    missingCount: number;
+    reviewItems: WholesaleFlowerItem[];
+  } | null>(null);
+  const [showImportPreview, setShowImportPreview] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // New flower form state
   const [newName, setNewName] = useState('');
@@ -124,33 +143,131 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
     setNewNote('');
   };
 
-  const handleExportCSV = () => {
-    const headers = ['Mã', 'Tên hoa', 'Tên tiếng Trung', 'Danh mục', 'Xuất xứ', 'Quy cách', 'Giá kho (VND)', 'Số cành/bó', 'Giá cành (VND)'];
-    const rows = catalog.map((f) => [
-      f.id,
-      `"${f.name}"`,
-      `"${f.originalChineseName || ''}"`,
-      `"${f.category}"`,
-      `"${f.origin}"`,
-      `"${f.packUnit}"`,
-      f.packPrice,
-      f.stemsPerPack,
-      f.unitPrice,
-    ]);
-    const csvContent =
-      'data:text/csv;charset=utf-8,\uFEFF' +
-      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Bang_Gia_Kho_Tri_Hai_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const rawRows = parseCSV(text);
+      if (rawRows.length === 0) return;
+
+      // Load manual stems per pack from localStorage
+      let manualStems: Record<string, number> = {};
+      try {
+        const saved = localStorage.getItem('solelia_manual_stems_v1');
+        if (saved) manualStems = JSON.parse(saved);
+      } catch (e) {}
+
+      const newCatalog: WholesaleFlowerItem[] = [];
+      const priceChangedItems: Array<{ item: WholesaleFlowerItem; oldPrice: number; newPrice: number }> = [];
+      let unchangedCount = 0;
+      const reviewItems: WholesaleFlowerItem[] = [];
+      const processedIds = new Set<string>();
+
+      // Mapping logic
+      rawRows.forEach((row) => {
+        const id = row.id || `import-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+        const name = row.name || 'Hoa chưa đặt tên';
+        const priceVnd = parseInt(row.price_vnd) || 0;
+        const packMin = parseInt(row.pack_min) || 0;
+        const priceUnit = row.price_unit?.toLowerCase();
+        
+        let stemsPerPack = packMin;
+        if (priceUnit === 'bo' && !packMin) {
+          stemsPerPack = manualStems[id] || 1;
+        } else if (priceUnit === 'canh') {
+          stemsPerPack = 1;
+        }
+
+        const unitPrice = stemsPerPack > 0 ? Math.round((priceUnit === 'canh' ? priceVnd : priceVnd / stemsPerPack)) : priceVnd;
+
+        const newItem: WholesaleFlowerItem = {
+          id,
+          name,
+          section: row.section,
+          category: (row.section as FlowerCategory) || 'Khác',
+          origin: (row.origin as FlowerOrigin) || 'Trung Quốc',
+          packUnit: row.price_unit === 'bo' ? `Bó ${stemsPerPack} cành` : 'Cành lẻ',
+          packPrice: priceVnd,
+          stemsPerPack,
+          unitPrice,
+          note: row.note,
+          review: row.review,
+          supplier: row.supplier,
+          priceDate: row.price_date,
+          page: row.page,
+        };
+
+        if (newItem.review) {
+          reviewItems.push(newItem);
+        }
+
+        // Matching
+        const existing = catalog.find(f => f.id === id) || 
+                         catalog.find(f => normalizeString(f.name) === normalizeString(name));
+
+        if (existing) {
+          if (existing.unitPrice !== unitPrice) {
+            priceChangedItems.push({ item: newItem, oldPrice: existing.unitPrice, newPrice: unitPrice });
+          } else {
+            unchangedCount++;
+          }
+          processedIds.add(existing.id);
+        } else {
+          // It's a truly new item
+        }
+        
+        newCatalog.push(newItem);
+      });
+
+      const missingInImport = catalog.filter(f => !processedIds.has(f.id));
+      
+      setImportPreview({
+        newItems: newCatalog.filter(n => !catalog.some(e => e.id === n.id || normalizeString(e.name) === normalizeString(n.name))),
+        priceChangedItems,
+        unchangedCount,
+        missingCount: missingInImport.length,
+        reviewItems,
+      });
+      setImportFile(file);
+      setShowImportPreview(true);
+      
+      // Store temporary result to apply later
+      (window as any)._tempImportCatalog = [
+        ...newCatalog,
+        ...missingInImport.map(f => ({ ...f, isMissingInLatestImport: true }))
+      ];
+    };
+    reader.readAsText(file);
+  };
+
+  const applyImport = () => {
+    if ((window as any)._tempImportCatalog) {
+      setCatalog((window as any)._tempImportCatalog);
+      delete (window as any)._tempImportCatalog;
+      setShowImportPreview(false);
+      setImportPreview(null);
+      setImportFile(null);
+    }
+  };
+
+  const isStale = (dateStr?: string) => {
+    if (!dateStr) return false;
+    try {
+      const priceDate = new Date(dateStr);
+      const now = new Date();
+      const diffDays = Math.ceil(Math.abs(now.getTime() - priceDate.getTime()) / (1000 * 60 * 60 * 24));
+      return diffDays > 14;
+    } catch (e) {
+      return false;
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#392A28]/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+    <>
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-[#392A28]/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
       <div className="bg-[#FAF7F3] rounded-2xl max-w-5xl w-full border border-[#EAE1DA] shadow-2xl overflow-hidden my-6 animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="bg-[#392A28] text-white px-6 py-4 flex items-center justify-between border-b border-[#392A28]">
@@ -166,14 +283,20 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImportCSV}
+              accept=".csv"
+              className="hidden"
+            />
             <button
               type="button"
-              onClick={handleExportCSV}
+              onClick={() => fileInputRef.current?.click()}
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-[#EAE1DA] transition-colors cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>Tải file CSV</span>
+              <Upload className="w-3.5 h-3.5" />
+              <span>Nhập bảng giá</span>
             </button>
             <button
               type="button"
@@ -190,7 +313,6 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
             >
               <X className="w-5 h-5" />
             </button>
-          </div>
         </div>
 
         {/* Add Flower Inline Form */}
@@ -385,22 +507,33 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
                     className="hover:bg-[#FAF7F3] transition-colors"
                   >
                     <td className="py-2.5 px-3">
-                      <div className="font-semibold text-[#392A28]">
-                        {item.name}
-                        {item.isCustom && (
-                          <span className="ml-1.5 text-[10px] text-[#B77E79] bg-[#F4E8E4] border border-[#EAE1DA] px-1.5 py-0.5 rounded font-normal">
-                            Tự thêm
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-[11px] text-[#92827C] mt-0.5">
-                        <span className="text-[#392A28] font-medium">{item.origin}</span>
-                        {item.originalChineseName && (
-                          <>
-                            <span>·</span>
-                            <span>{item.originalChineseName}</span>
-                          </>
-                        )}
+                      <div className="flex items-center gap-3">
+                        <FlowerIcon name={item.name} size="sm" />
+                        <div className="min-w-0">
+                          <div className="font-semibold text-[#392A28] flex items-center gap-1.5">
+                            <span className="truncate">{item.name}</span>
+                            {item.isCustom && (
+                              <span className="shrink-0 text-[10px] text-[#B77E79] bg-[#F4E8E4] border border-[#EAE1DA] px-1.5 py-0.5 rounded font-normal">
+                                Tự thêm
+                              </span>
+                            )}
+                            {item.isMissingInLatestImport && (
+                              <span className="shrink-0 text-[10px] text-rose-600 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded font-normal">
+                                không có trong bảng giá mới
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[11px] text-[#92827C] mt-0.5">
+                            <span className="text-[#392A28] font-medium">{item.origin}</span>
+                            {item.priceDate && (
+                              <div className={`flex items-center gap-1 ${isStale(item.priceDate) ? 'text-rose-500 font-bold' : ''}`}>
+                                <Clock className="w-3 h-3" />
+                                <span>{item.priceDate}</span>
+                              </div>
+                            )}
+                            {item.supplier && <span>· {item.supplier}</span>}
+                          </div>
+                        </div>
                       </div>
                     </td>
 
@@ -485,5 +618,120 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
         </div>
       </div>
     </div>
+
+    {/* Import Preview Modal */}
+      {showImportPreview && importPreview && (
+        <div className="fixed inset-0 z-[60] bg-[#392A28]/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-[#B77E79] text-white px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Upload className="w-5 h-5" />
+                <h3 className="font-bold">Xem trước bảng giá mới</h3>
+              </div>
+              <button onClick={() => setShowImportPreview(false)} className="p-1 hover:bg-white/20 rounded-lg cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Summary Stats */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                  <div className="text-xs text-blue-600 font-bold mb-1">MỚI</div>
+                  <div className="text-2xl font-bold text-blue-700">{importPreview.newItems.length}</div>
+                </div>
+                <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                  <div className="text-xs text-amber-600 font-bold mb-1">THAY ĐỔI GIÁ</div>
+                  <div className="text-2xl font-bold text-amber-700">{importPreview.priceChangedItems.length}</div>
+                </div>
+                <div className="p-3 bg-green-50 border border-green-100 rounded-xl">
+                  <div className="text-xs text-green-600 font-bold mb-1">GIỮ NGUYÊN</div>
+                  <div className="text-2xl font-bold text-green-700">{importPreview.unchangedCount}</div>
+                </div>
+                <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl">
+                  <div className="text-xs text-rose-600 font-bold mb-1">THIẾU TRONG FILE</div>
+                  <div className="text-2xl font-bold text-rose-700">{importPreview.missingCount}</div>
+                </div>
+              </div>
+
+              {/* Price Changes List */}
+              {importPreview.priceChangedItems.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-bold text-sm text-[#392A28] flex items-center gap-2">
+                    <Info className="w-4 h-4 text-amber-500" />
+                    Thay đổi giá ({importPreview.priceChangedItems.length})
+                  </h4>
+                  <div className="border border-[#EAE1DA] rounded-xl overflow-hidden divide-y divide-[#EAE1DA]">
+                    {importPreview.priceChangedItems.map(({ item, oldPrice, newPrice }) => {
+                      const diff = newPrice - oldPrice;
+                      const percent = Math.round((diff / oldPrice) * 100);
+                      const isLargeChange = Math.abs(percent) > 10;
+                      
+                      return (
+                        <div key={item.id} className="p-3 flex items-center justify-between text-xs hover:bg-stone-50">
+                          <div>
+                            <div className="font-bold text-[#392A28]">{item.name}</div>
+                            <div className="text-[#92827C]">{item.packUnit}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="flex items-center gap-2 font-mono">
+                              <span className="text-[#92827C] line-through">{formatVND(oldPrice)}</span>
+                              <ChevronRight className="w-3 h-3 text-[#92827C]" />
+                              <span className={`font-bold ${diff > 0 ? 'text-rose-600' : 'text-green-600'}`}>
+                                {formatVND(newPrice)}
+                              </span>
+                            </div>
+                            <div className={`text-[10px] font-bold ${isLargeChange ? 'bg-rose-100 text-rose-600 px-1 rounded' : 'text-[#92827C]'}`}>
+                              {diff > 0 ? '+' : ''}{percent}% {isLargeChange && '(Biến động mạnh)'}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Review Items List */}
+              {importPreview.reviewItems.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-bold text-sm text-rose-600 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    Lưu ý đặc biệt ({importPreview.reviewItems.length})
+                  </h4>
+                  <div className="border border-rose-200 bg-rose-50/50 rounded-xl p-4 space-y-3">
+                    {importPreview.reviewItems.map(item => (
+                      <div key={item.id} className="text-xs">
+                        <span className="font-bold text-[#392A28]">{item.name}: </span>
+                        <span className="text-rose-700 italic">"{item.review}"</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 bg-[#FAF7F3] border-t border-[#EAE1DA] flex gap-3">
+              <button
+                onClick={applyImport}
+                className="flex-1 bg-[#B77E79] hover:bg-[#9E6965] text-white font-bold py-3 rounded-xl transition-all shadow-md cursor-pointer"
+              >
+                Áp dụng bảng giá mới
+              </button>
+              <button
+                onClick={() => {
+                  setShowImportPreview(false);
+                  setImportPreview(null);
+                  setImportFile(null);
+                }}
+                className="px-6 border border-[#EAE1DA] text-[#92827C] font-bold py-3 rounded-xl hover:bg-[#EAE1DA]/30 transition-all cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };

@@ -82,7 +82,17 @@ export default function App() {
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(defaultPreset.photoUrl);
   const [orderQuantity, setOrderQuantity] = useState<number>(1); // Number of bouquets in this order
   const [items, setItems] = useState<RecipeItem[]>(defaultPreset.items);
-  const [variables, setVariables] = useState<CostVariables>(defaultPreset.variables);
+  const [variables, setVariables] = useState<CostVariables>({
+    wastagePercent: 5,
+    packagingCost: 30000,
+    laborCostType: 'fixed',
+    laborCostValue: 0,
+    overheadPercent: 0,
+    pricingMode: 'markup',
+    targetMarginPercent: 50,
+    markupFactor: 2.0,
+    shippingCost: 0,
+  });
   const [roundOption, setRoundOption] = useState<number>(10000); // Default round up to 10.000₫
 
   // Set web tab document title
@@ -226,6 +236,7 @@ export default function App() {
       pricingMode: 'markup',
       targetMarginPercent: 50,
       markupFactor: 2.0,
+      shippingCost: 0,
     });
     setRoundOption(10000);
     showToast('Đã tạo bảng tính công thức mới');

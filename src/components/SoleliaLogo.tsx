@@ -3,7 +3,7 @@ import React from 'react';
 interface SoleliaLogoProps {
   className?: string;
   showText?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
 }
 
 export const SoleliaLogo: React.FC<SoleliaLogoProps> = ({
@@ -12,6 +12,7 @@ export const SoleliaLogo: React.FC<SoleliaLogoProps> = ({
   size = 'md',
 }) => {
   const imageHeights = {
+    xs: 'h-6 sm:h-7',
     sm: 'h-8 sm:h-9',
     md: 'h-10 sm:h-12',
     lg: 'h-16 sm:h-20',

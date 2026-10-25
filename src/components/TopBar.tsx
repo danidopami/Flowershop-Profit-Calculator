@@ -26,6 +26,9 @@ export const TopBar: React.FC<TopBarProps> = ({
             <Menu className="w-5 h-5" />
           </button>
         )}
+        <div className="hidden sm:block">
+          <p className="text-xs italic text-[#92827C]">"Tiệm hoa nhỏ của 2 người iu nhau"</p>
+        </div>
       </div>
 
       {/* Right: Actions & User Profile */}
