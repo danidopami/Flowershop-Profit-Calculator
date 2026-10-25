@@ -77,12 +77,13 @@ export default function App() {
 
   // Active Recipe State
   const defaultPreset = PRESET_RECIPES[0];
-  const [recipeName, setRecipeName] = useState<string>(defaultPreset.name);
-  const [category, setCategory] = useState<string>(defaultPreset.category);
-  const [photoUrl, setPhotoUrl] = useState<string | undefined>(defaultPreset.photoUrl);
+  const [recipeName, setRecipeName] = useState<string>(defaultPreset?.name || 'Bó hoa mới');
+  const [category, setCategory] = useState<string>(defaultPreset?.category || 'Bó hoa tươi');
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(defaultPreset?.photoUrl);
+  const [description, setDescription] = useState<string>(defaultPreset?.description || '');
   const [orderQuantity, setOrderQuantity] = useState<number>(1); // Number of bouquets in this order
-  const [items, setItems] = useState<RecipeItem[]>(defaultPreset.items);
-  const [variables, setVariables] = useState<CostVariables>({
+  const [items, setItems] = useState<RecipeItem[]>(defaultPreset?.items || []);
+  const [variables, setVariables] = useState<CostVariables>(defaultPreset?.variables || {
     wastagePercent: 5,
     packagingCost: 30000,
     laborCostType: 'fixed',
@@ -97,7 +98,24 @@ export default function App() {
 
   // Set web tab document title
   useEffect(() => {
-    document.title = 'Solelia - Tiệm Hoa Ấm Áp | Quản Lý & Tính Giá Bó Hoa';
+    document.title = 'Solelia - Tiệm hoa nhỏ của 2 người iu nhau | Quản lý & Tính giá';
+  }, []);
+
+  // Sync images from source data (INITIAL_WHOLESALE_FLOWERS) into the live catalog
+  // This ensures existing users get updated images without losing their custom prices.
+  useEffect(() => {
+    setWholesaleCatalog(prev => {
+      let changed = false;
+      const updated = prev.map(item => {
+        const source = INITIAL_WHOLESALE_FLOWERS.find(s => s.id === item.id);
+        if (source && source.imageUrl && source.imageUrl !== item.imageUrl) {
+          changed = true;
+          return { ...item, imageUrl: source.imageUrl };
+        }
+        return item;
+      });
+      return changed ? updated : prev;
+    });
   }, []);
 
   // Persist Catalog to LocalStorage
@@ -168,10 +186,11 @@ export default function App() {
     setRecipeName(recipe.name);
     setCategory(recipe.category);
     setPhotoUrl(recipe.photoUrl);
+    setDescription(recipe.description || '');
     setItems(recipe.items);
     setVariables(recipe.variables);
     setActiveTab('calculator');
-    showToast(`Đã nạp mẫu "${recipe.name}"`);
+    showToast(`Đã nạp công thức "${recipe.name}"`);
   };
 
   // Handler: Save Current Recipe
@@ -190,6 +209,7 @@ export default function App() {
       id: `recipe-${Date.now()}`,
       name: nameToSave,
       category: category || 'Bó hoa tươi',
+      description: description.trim() || undefined,
       photoUrl: photoUrl,
       items: items,
       variables: variables,
@@ -198,8 +218,11 @@ export default function App() {
       suggestedPrice: breakdown.roundedPrice,
     };
 
-    setSavedRecipes((prev) => [newRecipe, ...prev.filter((r) => r.id !== newRecipe.id && r.name !== newRecipe.name)]);
-    showToast(`Đã lưu "${nameToSave}" vào danh sách Mẫu!`);
+    setSavedRecipes((prev) => [
+      newRecipe,
+      ...prev.filter((r) => r.name !== newRecipe.name),
+    ]);
+    showToast(`Đã lưu "${nameToSave}" vào thư viện mẫu!`);
   };
 
   // Handler: Duplicate Recipe
@@ -220,11 +243,26 @@ export default function App() {
     showToast('Đã xóa mẫu hoa khỏi thư viện');
   };
 
+  // Handler: Update photo of a recipe in library
+  const handleUpdateRecipePhoto = (recipeId: string, newPhotoUrl: string) => {
+    setSavedRecipes((prev) =>
+      prev.map((r) => (r.id === recipeId ? { ...r, photoUrl: newPhotoUrl } : r))
+    );
+    showToast('Đã cập nhật ảnh mẫu hoa');
+  };
+
+  // Handler: Restore default presets
+  const handleRestorePresets = () => {
+    setSavedRecipes(PRESET_RECIPES);
+    showToast('Đã khôi phục các công thức mẫu tiêu chuẩn');
+  };
+
   // Handler: New Blank Recipe
   const handleNewRecipe = () => {
     setRecipeName('Bó Hoa Mới');
     setCategory('Bó hoa tươi');
     setPhotoUrl(undefined);
+    setDescription('');
     setOrderQuantity(1);
     setItems([]);
     setVariables({
@@ -298,6 +336,7 @@ export default function App() {
         <TopBar
           onOpenMobileMenu={() => setIsMobileNavOpen(true)}
           onNewRecipe={handleNewRecipe}
+          onOpenLibrary={() => setActiveTab('library')}
           savedCount={savedRecipes.length}
         />
 
@@ -405,7 +444,9 @@ export default function App() {
         isOpen={isQuoteOpen}
         onClose={() => setIsQuoteOpen(false)}
         recipeName={recipeName}
+        setRecipeName={setRecipeName}
         category={category}
+        setCategory={setCategory}
         photoUrl={photoUrl}
         orderQuantity={orderQuantity}
         items={items}
@@ -420,6 +461,8 @@ export default function App() {
         onLoadRecipe={handleLoadRecipe}
         onDeleteRecipe={handleDeleteRecipe}
         onDuplicateRecipe={handleDuplicateRecipe}
+        onUpdatePhoto={handleUpdateRecipePhoto}
+        onRestorePresets={handleRestorePresets}
       />
 
       <WholesaleCatalogModal

@@ -102,28 +102,6 @@ export const INITIAL_WHOLESALE_FLOWERS: WholesaleFlowerItem[] = [
     imageUrl: "/assets/aistudio/hong-mocca_93387487.jpg"
   },
   {
-    id: "th-hong-christa-ecuador-60cm",
-    name: "Hồng Christa Ecuador 60cm",
-    category: "Hoa hồng",
-    origin: "Ecuador",
-    packUnit: "Cành",
-    packPrice: 45000,
-    stemsPerPack: 1,
-    unitPrice: 45000,
-    imageUrl: "/assets/aistudio/hong-christa-ecuador-60cm_a1f863fc.jpg"
-  },
-  {
-    id: "th-hong-explorer-ecuador-80cm",
-    name: "Hồng Explorer Ecuador 80cm",
-    category: "Hoa hồng",
-    origin: "Ecuador",
-    packUnit: "Cành",
-    packPrice: 50000,
-    stemsPerPack: 1,
-    unitPrice: 50000,
-    imageUrl: "/assets/aistudio/hong-explorer-ecuador-80cm_2983bfb5.jpg"
-  },
-  {
     id: "th-hong-chum-cam-balcony",
     name: "Hồng Chùm Cam Balcony",
     category: "Hoa hồng",
@@ -145,6 +123,17 @@ export const INITIAL_WHOLESALE_FLOWERS: WholesaleFlowerItem[] = [
     unitPrice: 15000,
     imageUrl: "/assets/aistudio/hong-chum-socola_93dbe077.jpg"
   },
+  {
+    id: "th-hong-chum-dau-tay",
+    name: "Hồng Chùm Dâu Tây",
+    category: "Hoa hồng",
+    origin: "Trung Quốc",
+    packUnit: "Bó 10 cành",
+    packPrice: 165000,
+    stemsPerPack: 10,
+    unitPrice: 16500,
+    imageUrl: "/assets/aistudio/hong-chum-dau-tay_ff77f9ca.jpg"
+  },
 
   // --- CÚC & MẪU ĐƠN ---
   {
@@ -157,6 +146,17 @@ export const INITIAL_WHOLESALE_FLOWERS: WholesaleFlowerItem[] = [
     stemsPerPack: 5,
     unitPrice: 38000,
     imageUrl: "/assets/aistudio/cuc-mau-don-cam-dao-malaysia_8c83f4c5.jpg"
+  },
+  {
+    id: "th-cuc-mau-don-cam-malaysia",
+    name: "Cúc Mẫu Đơn Cam Malaysia",
+    category: "Cúc & Mẫu đơn",
+    origin: "Malaysia",
+    packUnit: "Bó 5 cành",
+    packPrice: 190000,
+    stemsPerPack: 5,
+    unitPrice: 38000,
+    imageUrl: "/assets/aistudio/cuc-mau-don-cam-malaysia_f9e9359a.jpg"
   },
   {
     id: "th-cuc-mau-don-hong-malaysia",
@@ -225,6 +225,28 @@ export const INITIAL_WHOLESALE_FLOWERS: WholesaleFlowerItem[] = [
     imageUrl: "/assets/aistudio/mao-luong-hong_0a60598f.jpg"
   },
   {
+    id: "th-mao-luong-cam",
+    name: "Mao Lương Cam",
+    category: "Cúc & Mẫu đơn",
+    origin: "Trung Quốc",
+    packUnit: "Bó",
+    packPrice: 75000,
+    stemsPerPack: 1,
+    unitPrice: 75000,
+    imageUrl: "/assets/aistudio/mao-luong-cam_07657277.jpg"
+  },
+  {
+    id: "th-mao-luong-ca-hoi",
+    name: "Mao Lương Cá Hồi",
+    category: "Cúc & Mẫu đơn",
+    origin: "Trung Quốc",
+    packUnit: "Bó",
+    packPrice: 85000,
+    stemsPerPack: 1,
+    unitPrice: 85000,
+    imageUrl: "/assets/aistudio/mao-luong-ca-hoi_805d2085.jpg"
+  },
+  {
     id: "th-cuc-tanna",
     name: "Cúc Tanna",
     category: "Cúc & Mẫu đơn",
@@ -236,15 +258,15 @@ export const INITIAL_WHOLESALE_FLOWERS: WholesaleFlowerItem[] = [
     imageUrl: "/assets/aistudio/cuc-tanna_fa2e91e5.jpg"
   },
   {
-    id: "th-peony-red-charm",
-    name: "Peony Red Charm",
+    id: "th-cuc-hoa-mi",
+    name: "Cúc Họa Mi",
     category: "Cúc & Mẫu đơn",
     origin: "Trung Quốc",
-    packUnit: "Cành",
-    packPrice: 155000,
+    packUnit: "Bó",
+    packPrice: 115000,
     stemsPerPack: 1,
-    unitPrice: 155000,
-    imageUrl: "/assets/aistudio/peony-red-charm_dddf2845.jpg"
+    unitPrice: 115000,
+    imageUrl: "/assets/aistudio/cuc-hoa-mi_6012d279.jpg"
   },
 
   // --- TULIP ---
@@ -292,6 +314,17 @@ export const INITIAL_WHOLESALE_FLOWERS: WholesaleFlowerItem[] = [
     unitPrice: 30000,
     imageUrl: "/assets/aistudio/tulip-trang-tron-antarctica-hl_17bec2fe.jpg"
   },
+  {
+    id: "th-tulip-nhuom-xanh-dam-hl",
+    name: "Tulip Nhuộm Xanh Đậm HL",
+    category: "Tulip",
+    origin: "Hà Lan",
+    packUnit: "Bó 10 cành",
+    packPrice: 380000,
+    stemsPerPack: 10,
+    unitPrice: 38000,
+    imageUrl: "/assets/aistudio/tulip-nhuom-xanh-dam-royal-blue-hl_13d372ba.jpg"
+  },
 
   // --- CÁT TƯỜNG ---
   {
@@ -304,6 +337,17 @@ export const INITIAL_WHOLESALE_FLOWERS: WholesaleFlowerItem[] = [
     stemsPerPack: 1,
     unitPrice: 115000,
     imageUrl: "/assets/aistudio/cat-tuong-ca-phe_9ac23b9c.jpg"
+  },
+  {
+    id: "th-cat-tuong-do-ruou",
+    name: "Cát Tường Đỏ Rượu",
+    category: "Cát tường",
+    origin: "Trung Quốc",
+    packUnit: "Bó",
+    packPrice: 125000,
+    stemsPerPack: 1,
+    unitPrice: 125000,
+    imageUrl: "/assets/aistudio/cat-tuong-do-ruou_ceac3163.jpg"
   },
   {
     id: "th-cat-tuong-xoan-xanh",
@@ -477,28 +521,6 @@ export const INITIAL_WHOLESALE_FLOWERS: WholesaleFlowerItem[] = [
     imageUrl: "/assets/aistudio/canh-hong-mai_590eaca3.jpg"
   },
   {
-    id: "th-phang-cam-navel",
-    name: "Phăng Cam Navel",
-    category: "Hoa khô & Hoa phụ",
-    origin: "Trung Quốc",
-    packUnit: "Bó 18-20 cành",
-    packPrice: 165000,
-    stemsPerPack: 20,
-    unitPrice: 8250,
-    imageUrl: "/assets/aistudio/phang-cam-navel_f960698c.jpg"
-  },
-  {
-    id: "th-phang-do-lua",
-    name: "Phăng Đỏ Lụa",
-    category: "Hoa khô & Hoa phụ",
-    origin: "Trung Quốc",
-    packUnit: "Bó 18-20 cành",
-    packPrice: 90000,
-    stemsPerPack: 20,
-    unitPrice: 4500,
-    imageUrl: "/assets/aistudio/phang-do-lua_ac972a34.jpg"
-  },
-  {
     id: "th-thanh-lieu-trang",
     name: "Thanh Liễu Trắng",
     category: "Hoa khô & Hoa phụ",
@@ -519,6 +541,17 @@ export const INITIAL_WHOLESALE_FLOWERS: WholesaleFlowerItem[] = [
     stemsPerPack: 1,
     unitPrice: 125000,
     imageUrl: "/assets/aistudio/thanh-lieu-hong_d1b7a38e.jpg"
+  },
+  {
+    id: "th-hoa-tuyet-mai",
+    name: "Hoa Tuyết Mai",
+    category: "Hoa khô & Hoa phụ",
+    origin: "Trung Quốc",
+    packUnit: "Bó",
+    packPrice: 145000,
+    stemsPerPack: 1,
+    unitPrice: 145000,
+    imageUrl: "/assets/aistudio/hoa-tuyet-mai_90f6750d.jpg"
   },
 
   // --- CỎ & LÁ PHỤ ---
@@ -598,5 +631,16 @@ export const INITIAL_WHOLESALE_FLOWERS: WholesaleFlowerItem[] = [
     stemsPerPack: 1,
     unitPrice: 75000,
     imageUrl: "/assets/aistudio/la-chanh-y-cm_521d7996.jpg"
+  },
+  {
+    id: "th-co-dong-tien",
+    name: "Cỏ Đồng Tiền",
+    category: "Cỏ & Lá phụ",
+    origin: "Trung Quốc",
+    packUnit: "Bó",
+    packPrice: 55000,
+    stemsPerPack: 1,
+    unitPrice: 55000,
+    imageUrl: "/assets/aistudio/co-dong-tien_97b19801.jpg"
   }
 ];

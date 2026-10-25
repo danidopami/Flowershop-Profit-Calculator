@@ -28,6 +28,7 @@ export interface WholesaleFlowerItem {
   packPrice: number;
   stemsPerPack: number;
   unitPrice: number;
+  imageUrl?: string;
   note?: string;
   review?: string;
   supplier?: string;
@@ -48,6 +49,7 @@ export interface RecipeItem {
   quantity: number;
   unitType: 'cành' | 'bó' | 'kg' | 'nhánh';
   totalCost: number;
+  imageUrl?: string;
 }
 
 export type LaborCostType = 'fixed' | 'percent';
@@ -116,4 +118,23 @@ export interface ChatSuggestionResult {
   items: SuggestedFlowerItem[];
   totalEstimatedCost: number;
   totalStems: number;
+}
+
+export interface ScanCandidate {
+  id: string;
+  confidence: number;
+}
+
+export interface ScanResultItem {
+  label: string;
+  stems: number;
+  candidates: ScanCandidate[];
+  selectedId: string;
+  isRemoving?: boolean;
+}
+
+export interface AIScanResult {
+  items: ScanResultItem[];
+  unmatched: string[];
+  imageUrl: string;
 }

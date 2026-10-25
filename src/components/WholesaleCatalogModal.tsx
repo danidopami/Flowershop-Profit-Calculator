@@ -508,7 +508,7 @@ export const WholesaleCatalogModal: React.FC<WholesaleCatalogModalProps> = ({
                   >
                     <td className="py-2.5 px-3">
                       <div className="flex items-center gap-3">
-                        <FlowerIcon name={item.name} size="sm" />
+                        <FlowerIcon name={item.name} imageUrl={item.imageUrl} size="sm" />
                         <div className="min-w-0">
                           <div className="font-semibold text-[#392A28] flex items-center gap-1.5">
                             <span className="truncate">{item.name}</span>

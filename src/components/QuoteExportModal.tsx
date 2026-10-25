@@ -19,6 +19,8 @@ interface QuoteExportModalProps {
   onClose: () => void;
   recipeName: string;
   category: string;
+  setRecipeName: (name: string) => void;
+  setCategory: (cat: string) => void;
   photoUrl?: string;
   orderQuantity?: number;
   items: RecipeItem[];
@@ -30,7 +32,9 @@ export const QuoteExportModal: React.FC<QuoteExportModalProps> = ({
   isOpen,
   onClose,
   recipeName,
+  setRecipeName,
   category,
+  setCategory,
   photoUrl,
   orderQuantity = 1,
   breakdown,
@@ -52,7 +56,14 @@ export const QuoteExportModal: React.FC<QuoteExportModalProps> = ({
   const handleDownloadImage = async () => {
     if (!quoteRef.current) return;
     try {
-      const dataUrl = await toPng(quoteRef.current, { backgroundColor: '#ffffff', quality: 1.0 });
+      (document.activeElement as HTMLElement)?.blur?.();
+      const dataUrl = await toPng(quoteRef.current, {
+        backgroundColor: '#ffffff',
+        quality: 1.0,
+        pixelRatio: 2,
+        skipFonts: true,
+        fontEmbedCSS: '',
+      });
       const link = document.createElement('a');
       link.download = `solelia-quote-${Date.now()}.png`;
       link.href = dataUrl;
@@ -66,7 +77,14 @@ export const QuoteExportModal: React.FC<QuoteExportModalProps> = ({
     if (!quoteRef.current) return;
     setIsCopying(true);
     try {
-      const blob = await toBlob(quoteRef.current, { backgroundColor: '#ffffff', quality: 1.0 });
+      (document.activeElement as HTMLElement)?.blur?.();
+      const blob = await toBlob(quoteRef.current, {
+        backgroundColor: '#ffffff',
+        quality: 1.0,
+        pixelRatio: 2,
+        skipFonts: true,
+        fontEmbedCSS: '',
+      });
       if (blob) {
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': blob })
@@ -157,6 +175,26 @@ export const QuoteExportModal: React.FC<QuoteExportModalProps> = ({
             <div className="col-span-2 flex flex-col gap-0.5">
               <span className="text-[#92827C] font-bold uppercase text-[7px]">Địa chỉ giao</span>
               <input type="text" value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)} placeholder="Nhập địa chỉ..." className="bg-transparent border-b border-[#EAE1DA] focus:outline-none py-0.5" />
+            </div>
+            
+            {/* Added: Product Name & Category */}
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[#B77E79] font-bold uppercase text-[7px]">Tên mẫu hoa</span>
+              <input type="text" value={recipeName} onChange={e => setRecipeName(e.target.value)} placeholder="Nhập tên hoa..." className="bg-transparent border-b border-[#EAE1DA] font-bold focus:outline-none py-0.5" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[#B77E79] font-bold uppercase text-[7px]">Phân loại</span>
+              <select 
+                value={category} 
+                onChange={e => setCategory(e.target.value)} 
+                className="bg-transparent border-b border-[#EAE1DA] focus:outline-none py-0.5 cursor-pointer appearance-none"
+              >
+                <option value="Bó hoa tươi">Bó hoa tươi</option>
+                <option value="Lãng hoa / Giỏ hoa">Lãng hoa / Giỏ hoa</option>
+                <option value="Hoa cưới">Hoa cưới</option>
+                <option value="Hoa chia buồn">Hoa chia buồn</option>
+                <option value="Hoa sự kiện">Hoa sự kiện</option>
+              </select>
             </div>
           </div>
 

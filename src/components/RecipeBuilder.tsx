@@ -19,7 +19,7 @@ import {
   ImageIcon,
   Maximize2,
 } from 'lucide-react';
-import { RecipeItem, WholesaleFlowerItem } from '../types';
+import { RecipeItem, WholesaleFlowerItem, AIScanResult, ScanResultItem } from '../types';
 import { formatVND } from '../utils/calculator';
 import { getFlowerThumbnail } from '../utils/flowerThumbnails';
 import { ChatRecipeSuggestionModal } from './ChatRecipeSuggestionModal';
@@ -28,6 +28,8 @@ import {
   ChatSuggestionResult,
   parseChatRecipe,
 } from '../utils/chatRecipeParser';
+import { processImageForUpload } from '../utils/imageProcessor';
+import { ScanReviewModal } from './ScanReviewModal';
 
 interface RecipeBuilderProps {
   recipeName: string;
@@ -95,7 +97,10 @@ export const RecipeBuilder: React.FC<RecipeBuilderProps> = ({
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
   const [chatSuggestionResult, setChatSuggestionResult] = useState<ChatSuggestionResult | null>(null);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [scanResult, setScanResult] = useState<AIScanResult | null>(null);
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<{ url: string; name: string } | null>(null);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Recently used flowers tracker
@@ -424,101 +429,52 @@ export const RecipeBuilder: React.FC<RecipeBuilderProps> = ({
   const handleAnalyzeImage = async (file: File) => {
     setIsAnalyzingImage(true);
     try {
-      // 1. Convert to base64
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve) => {
-        reader.onload = () => resolve(reader.result as string);
-      });
-      reader.readAsDataURL(file);
-      const base64Data = await base64Promise;
-      const base64Image = base64Data.split(',')[1];
+      // 1. Process image: downscale and re-encode
+      const base64Image = await processImageForUpload(file, 1024);
+      const imageUrl = `data:image/jpeg;base64,${base64Image}`;
 
-      // 2. Call API
-      const res = await fetch('/api/gemini/analyze-bouquet-image', {
+      // 2. Call API with compact catalog
+      const res = await fetch('/api/scan-bouquet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           imageBase64: base64Image,
-          catalogFlowers: wholesaleCatalog.slice(0, 160).map((f) => ({
+          catalog: wholesaleCatalog.map(f => ({
             id: f.id,
             name: f.name,
-            packPrice: f.packPrice,
-            packUnit: f.packUnit,
-            stemsPerPack: f.stemsPerPack,
-            unitPrice: f.unitPrice,
+            unit: f.packUnit
           })),
         }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.items) && data.items.length > 0) {
-          const mappedItems: SuggestedFlowerItem[] = data.items.map((it: any, idx: number) => {
-            let matched: WholesaleFlowerItem | undefined;
-            if (it.catalogFlowerId) {
-              matched = wholesaleCatalog.find((f) => f.id === it.catalogFlowerId);
-            }
-            if (!matched && it.flowerName) {
-              const lower = it.flowerName.toLowerCase().trim();
-              matched = wholesaleCatalog.find(
-                (f) =>
-                  f.name.toLowerCase().trim() === lower ||
-                  f.name.toLowerCase().includes(lower) ||
-                  lower.includes(f.name.toLowerCase())
-              );
-            }
+      const data = await res.json();
 
-            const unit: 'cành' | 'bó' = it.unit === 'cành' ? 'cành' : 'bó';
-            let unitPrice = 100000;
-            if (matched) {
-              unitPrice =
-                unit === 'bó'
-                  ? matched.packPrice
-                  : matched.unitPrice ||
-                    Math.round(matched.packPrice / (matched.stemsPerPack || 1));
-            }
-
-            const count = typeof it.count === 'number' && it.count > 0 ? it.count : 1;
-            const totalPrice = Math.round(count * unitPrice);
-
-            return {
-              id: `img-sug-${idx}-${Date.now()}`,
-              rawInputText: it.flowerName,
-              catalogFlowerId: matched?.id || it.catalogFlowerId || '',
-              flowerName: matched?.name || it.flowerName,
-              count,
-              unit,
-              unitPrice,
-              totalPrice,
-              selected: true,
-              matchType: (matched ? 'exact' : 'unmatched') as any,
-              matchedFlower: matched,
-              note: matched ? 'Nhận diện từ ảnh (Khớp kho)' : 'Nhận diện từ ảnh (Ngoài kho)',
-            };
-          });
-
-          const totalEstimatedCost = mappedItems.reduce((sum, it) => sum + it.totalPrice, 0);
-          const totalStems = mappedItems.reduce((sum, it) => {
-            if (it.unit === 'cành') return sum + it.count;
-            const stems = it.matchedFlower?.stemsPerPack || 10;
-            return sum + it.count * stems;
-          }, 0);
-
-          setChatSuggestionResult({
-            rawPrompt: 'AI quét ảnh bó hoa',
-            items: mappedItems,
-            totalEstimatedCost,
-            totalStems,
-          });
-          setIsSuggestionModalOpen(true);
-        }
+      if (!res.ok) {
+        throw new Error(data.error || 'Lỗi không xác định khi quét ảnh.');
       }
-    } catch (e) {
+
+      // 3. Show review modal
+      setScanResult({
+        ...data,
+        imageUrl
+      });
+      setIsScanModalOpen(true);
+    } catch (e: any) {
       console.error('AI Image scanning failed:', e);
+      alert(e.message || 'Lỗi kết nối máy chủ, vui lòng thử lại.');
     } finally {
       setIsAnalyzingImage(false);
     }
   };
+
+  const handleConfirmScan = (finalItems: { flower: WholesaleFlowerItem; quantity: number }[]) => {
+    finalItems.forEach(({ flower, quantity }) => {
+      handleAddFlower(flower, quantity);
+    });
+    setIsScanModalOpen(false);
+    setScanResult(null);
+  };
+
 
   // Handle image upload from file
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -535,81 +491,79 @@ export const RecipeBuilder: React.FC<RecipeBuilderProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Dedicated Input Section Card matching reference screenshot */}
+      {/* 1. HERO CHAT: "Nàng cần bó hoa gì?" - Đưa lên đầu và nổi bật nhất */}
       <div className="bg-white rounded-2xl border border-[#EAE1DA] p-5 sm:p-6 shadow-2xs space-y-4">
-        {/* 1. HERO CHAT: "Nàng cần bó hoa gì?" - Đưa lên đầu và nổi bật nhất */}
-        <div className="bg-[#FAF7F3] rounded-2xl border border-[#EAE1DA] p-4 sm:p-5 space-y-2.5 shadow-2xs">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#B77E79] text-white flex items-center justify-center shadow-xs shrink-0">
-              <MessageSquare className="w-4 h-4" />
-            </div>
-            <h2 className="font-bold text-base sm:text-lg text-[#392A28]">
-              Nàng cần bó hoa gì?
-            </h2>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-[#B77E79] text-white flex items-center justify-center shadow-xs shrink-0">
+            <MessageSquare className="w-4 h-4" />
           </div>
+          <h2 className="font-bold text-base sm:text-lg text-[#392A28]">
+            Nàng cần bó hoa gì?
+          </h2>
+        </div>
 
-          <div className="relative bg-white rounded-xl border border-[#EAE1DA] focus-within:border-[#B77E79] focus-within:ring-1 focus-within:ring-[#B77E79] overflow-hidden shadow-2xs">
-            <textarea
-              rows={3}
-              value={chatPrompt}
-              onChange={(e) => setChatPrompt(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendChatPrompt();
-                }
+        <div className="relative bg-[#FAF7F3] rounded-xl border border-[#EAE1DA] focus-within:border-[#B77E79] focus-within:ring-1 focus-within:ring-[#B77E79] overflow-hidden shadow-2xs">
+          <textarea
+            rows={3}
+            value={chatPrompt}
+            onChange={(e) => setChatPrompt(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendChatPrompt();
+              }
+            }}
+            placeholder="Ví dụ: trong ảnh dùng 1 bó hồng cam Balcony, 1 bó cỏ đồng tiền, 1 bó lá bạc..."
+            className="w-full px-3.5 pt-3 pb-11 text-xs sm:text-sm text-[#392A28] placeholder-[#92827C]/70 bg-transparent resize-none focus:outline-none"
+          />
+
+          <div className="absolute bottom-2.5 right-3 flex items-center gap-2">
+            <input
+              type="file"
+              ref={imageInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleAnalyzeImage(file);
               }}
-              placeholder="Ví dụ: trong ảnh dùng 1 bó hồng cam Balcony, 1 bó cỏ đồng tiền, 1 bó lá bạc..."
-              className="w-full px-3.5 pt-3 pb-11 text-xs sm:text-sm text-[#392A28] placeholder-[#92827C]/70 bg-transparent resize-none focus:outline-none"
             />
+            <button
+              type="button"
+              disabled={isAnalyzingImage || isChatProcessing}
+              onClick={() => imageInputRef.current?.click()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#B77E79] bg-white hover:bg-[#F4E8E4] border border-[#EAE1DA] rounded-xl transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {isAnalyzingImage ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Camera className="w-3.5 h-3.5" />
+              )}
+              <span className="hidden sm:inline">Quét ảnh AI</span>
+            </button>
 
-            <div className="absolute bottom-2.5 right-3 flex items-center gap-2">
-              <input
-                type="file"
-                ref={imageInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleAnalyzeImage(file);
-                }}
-              />
-              <button
-                type="button"
-                disabled={isAnalyzingImage || isChatProcessing}
-                onClick={() => imageInputRef.current?.click()}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#B77E79] bg-[#FAF7F3] hover:bg-[#F4E8E4] border border-[#EAE1DA] rounded-xl transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {isAnalyzingImage ? (
+            <button
+              type="button"
+              disabled={!chatPrompt.trim() || isChatProcessing || isAnalyzingImage}
+              onClick={handleSendChatPrompt}
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-[#B77E79] hover:bg-[#9E6965] rounded-xl transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {isChatProcessing ? (
+                <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Camera className="w-3.5 h-3.5" />
-                )}
-                <span className="hidden sm:inline">Quét ảnh AI</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={!chatPrompt.trim() || isChatProcessing || isAnalyzingImage}
-                onClick={handleSendChatPrompt}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-[#B77E79] hover:bg-[#9E6965] rounded-xl transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {isChatProcessing ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Đang tra giá...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Gửi</span>
-                    <Send className="w-3.5 h-3.5" />
-                  </>
-                )}
-              </button>
-            </div>
+                  <span>Đang tra giá...</span>
+                </>
+              ) : (
+                <>
+                  <span>Gửi</span>
+                  <Send className="w-3.5 h-3.5" />
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
+
 
       {/* Selected Ingredients Table ("Danh sách hoa") */}
       <div className="bg-white rounded-2xl border border-[#EAE1DA] p-5 sm:p-6 shadow-2xs space-y-4">
@@ -631,7 +585,7 @@ export const RecipeBuilder: React.FC<RecipeBuilderProps> = ({
             {onSaveRecipe && items.length > 0 && (
               <button
                 type="button"
-                onClick={onSaveRecipe}
+                onClick={() => setIsSaveModalOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#392A28] bg-[#FAF7F3] hover:bg-[#F4E8E4] border border-[#EAE1DA] rounded-xl transition-all cursor-pointer shadow-2xs"
               >
                 <BookmarkPlus className="w-3.5 h-3.5 text-[#B77E79]" />
@@ -1062,6 +1016,82 @@ export const RecipeBuilder: React.FC<RecipeBuilderProps> = ({
         </div>
       </div>
 
+      {/* Save Recipe Confirmation Modal */}
+      {isSaveModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#392A28]/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl border border-[#EAE1DA] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-[#FAF7F3] px-6 py-4 border-b border-[#EAE1DA] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BookmarkPlus className="w-5 h-5 text-[#B77E79]" />
+                <h3 className="font-bold text-[#392A28]">Lưu mẫu hoa mới</h3>
+              </div>
+              <button 
+                onClick={() => setIsSaveModalOpen(false)}
+                className="text-[#92827C] hover:text-[#392A28] transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-5">
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-[#92827C] uppercase tracking-wider ml-1">
+                  Tên mẫu hoa
+                </label>
+                <input
+                  type="text"
+                  autoFocus
+                  value={recipeName}
+                  onChange={(e) => setRecipeName(e.target.value)}
+                  placeholder="Ví dụ: Bó hồng đỏ 50 cành..."
+                  className="w-full px-4 py-3 bg-[#FAF7F3] border border-[#EAE1DA] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#B77E79] focus:border-[#B77E79] text-[#392A28] font-bold"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-[#92827C] uppercase tracking-wider ml-1">
+                  Phân loại
+                </label>
+                <div className="relative">
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full px-4 py-3 bg-[#FAF7F3] border border-[#EAE1DA] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#B77E79] focus:border-[#B77E79] text-[#392A28] font-medium cursor-pointer appearance-none"
+                  >
+                    <option value="Bó hoa tươi">Bó hoa tươi</option>
+                    <option value="Lãng hoa / Giỏ hoa">Lãng hoa / Giỏ hoa</option>
+                    <option value="Hoa cưới">Hoa cưới</option>
+                    <option value="Hoa chia buồn">Hoa chia buồn</option>
+                    <option value="Hoa sự kiện">Hoa sự kiện</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-[#92827C] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsSaveModalOpen(false)}
+                  className="flex-1 px-4 py-3 text-sm font-bold text-[#92827C] bg-white border border-[#EAE1DA] rounded-xl hover:bg-[#FAF7F3] transition-all cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onSaveRecipe) onSaveRecipe();
+                    setIsSaveModalOpen(false);
+                  }}
+                  className="flex-1 px-4 py-3 text-sm font-bold text-white bg-[#B77E79] rounded-xl hover:bg-[#9E6965] shadow-lg shadow-[#B77E79]/20 transition-all cursor-pointer"
+                >
+                  Xác nhận lưu
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Chat Suggestion Modal */}
       <ChatRecipeSuggestionModal
         isOpen={isSuggestionModalOpen}
@@ -1099,6 +1129,16 @@ export const RecipeBuilder: React.FC<RecipeBuilderProps> = ({
             </div>
           </div>
         </div>
+      )}
+      {/* AI Scan Review Modal */}
+      {scanResult && (
+        <ScanReviewModal
+          isOpen={isScanModalOpen}
+          onClose={() => setIsScanModalOpen(false)}
+          scanResult={scanResult}
+          wholesaleCatalog={wholesaleCatalog}
+          onConfirm={handleConfirmScan}
+        />
       )}
     </div>
   );

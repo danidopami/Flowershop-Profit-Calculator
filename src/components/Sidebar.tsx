@@ -43,7 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'library',
-      label: 'Mẫu',
+      label: 'Thư viện mẫu',
       icon: BookmarkCheck,
       badge: savedCount,
       onClick: () => {
@@ -54,7 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'catalog',
-      label: 'Giá hoa',
+      label: 'Kho nguyên liệu',
       icon: Flower2,
       badge: catalogCount,
       onClick: () => {
@@ -86,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               Solelia
             </span>
             <span className="text-[10px] text-[#92827C] tracking-wide font-medium">
-              Tiệm hoa nhỏ của 2 người iu nhau
+              Tiệm hoa Ấm Áp
             </span>
           </div>
         </div>
@@ -153,7 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             "Tiệm hoa nhỏ của 2 người iu nhau"
           </p>
           <span className="text-[10px] text-[#B77E79] tracking-wider uppercase font-medium block">
-            Solelia Studio
+            Solelia Fleurs
           </span>
         </div>
 

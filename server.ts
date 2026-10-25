@@ -320,81 +320,111 @@ function analyzeBouquetFallback(cleanBase64: string, catalogFlowers: any[]) {
   };
 }
 
-// AI Image Vision Recipe Parsing Endpoint
-app.post('/api/gemini/analyze-bouquet-image', async (req: Request, res: Response) => {
+// NEW: Scan bouquet image endpoint
+app.post('/api/scan-bouquet', async (req: Request, res: Response) => {
   try {
-    const { imageBase64, catalogFlowers = [] } = req.body;
+    const { imageBase64, catalog = [] } = req.body;
 
     if (!imageBase64) {
-      return res.status(400).json({ error: 'Thiếu dữ liệu ảnh bó hoa' });
+      return res.status(400).json({ error: 'Thiếu dữ liệu ảnh để quét.' });
     }
 
     const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    
+    // Build a compact catalog string for the prompt
+    const catalogContext = catalog.length > 0 
+      ? `DANH MỤC HOA CÓ SẴN (chỉ chọn từ danh sách này):\n${catalog.map((f: any) => `- ID: ${f.id} | Tên: ${f.name} | Đơn vị: ${f.unit}`).join('\n')}`
+      : 'Không có danh mục hoa cụ thể, hãy mô tả tên hoa bằng tiếng Việt.';
 
-    let catalogPromptContext = '';
-    if (Array.isArray(catalogFlowers) && catalogFlowers.length > 0) {
-      const topItems = catalogFlowers.slice(0, 150).map((f: any) =>
-        `- ID: "${f.id}" | Tên: "${f.name}"`
-      );
-      catalogPromptContext = `\nDANH MỤC HOA KHO TRÍ HẢI ĐỂ ĐỐI CHIẾU ID:\n${topItems.join('\n')}\n`;
-    }
+    const systemInstruction = `You are an assistant for a Vietnamese flower shop. Look at the bouquet photo. Identify each distinct flower and foliage type and estimate how many stems of each. Choose ONLY from the provided catalog, by id. Never invent an id. If unsure between varieties, return up to 3 candidate ids, best first, each with a confidence from 0 to 1. Use color, shape and variety clues. Wrapping paper, ribbon, cards and vases are not ingredients. If a flower is not in the catalog, put a short Vietnamese description in \`unmatched\`.`;
 
-    const systemPrompt = `Bạn là chuyên gia bóc tách nguyên liệu hoa từ hình ảnh cho tiệm hoa Solelia.
-Nhiệm vụ:
-1. Nhìn vào ảnh bó hoa và nhận diện TẤT CẢ các loại hoa, lá phụ, cỏ trang trí.
-2. Ước lượng số lượng (count) và đơn vị (unit: 'cành' hoặc 'bó') cho từng loại.
-3. Đối chiếu với DANH MỤC HOA KHO TRÍ HẢI bên dưới để tìm ID (catalogFlowerId) khớp nhất. Nếu không có trong kho, để trống ID.
-4. Trả về JSON chứa summary và mảng detectedFlowers.
-
-${catalogPromptContext}
-
-CHÚ Ý: Chỉ trả về JSON. Ước lượng số lượng thực tế có trong bó hoa.`;
-
-    try {
-      const response = await genAI.models.generateContent({
-        model: 'gemini-3.8-flash',
-        contents: [
-          { text: systemPrompt },
-          {
-            inlineData: {
-              data: cleanBase64,
-              mimeType: 'image/jpeg',
-            },
+    const response = await genAI.models.generateContent({
+      model: 'gemini-3.8-flash',
+      contents: [
+        { text: `${systemInstruction}\n\n${catalogContext}` },
+        {
+          inlineData: {
+            data: cleanBase64,
+            mimeType: 'image/jpeg',
           },
-        ],
-      });
+        },
+      ],
+      config: {
+        temperature: 0.2,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            items: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  label: { type: Type.STRING, description: 'Vietnamese common name of the detected flower.' },
+                  stems: { type: Type.NUMBER, description: 'Estimated quantity.' },
+                  candidates: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        id: { type: Type.STRING },
+                        confidence: { type: Type.NUMBER }
+                      },
+                      required: ['id', 'confidence']
+                    }
+                  }
+                },
+                required: ['label', 'stems', 'candidates']
+              }
+            },
+            unmatched: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            }
+          },
+          required: ['items', 'unmatched']
+        }
+      }
+    });
 
-      const responseText = response.text || '{}';
-      // Extract JSON if model wraps it in markdown blocks
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      const parsedData = JSON.parse(jsonMatch ? jsonMatch[0] : responseText);
-      
-      // Standardize schema
-      const result = {
-        summary: parsedData.summary || 'Đã phân tích ảnh bó hoa.',
-        items: (parsedData.detectedFlowers || parsedData.items || []).map((it: any) => ({
-          catalogFlowerId: it.catalogFlowerId || '',
-          flowerName: it.flowerName || 'Hoa lạ',
-          count: it.count || 1,
-          unit: it.unit || 'cành',
-          note: it.note || 'Nhận diện từ ảnh',
-        }))
-      };
+    const result = JSON.parse(response.text || '{"items":[], "unmatched":[]}');
 
-      return res.json(result);
-    } catch (geminiError: any) {
-      console.warn('Gemini Vision failed, using fallback:', geminiError.message);
-      const fallback = analyzeBouquetFallback(cleanBase64, catalogFlowers);
-      return res.json({
-        summary: fallback.summary,
-        items: fallback.detectedFlowers
-      });
+    // Validation:
+    // 1. Drop candidates not in catalog
+    // 2. Clamp stems 1-100
+    const catalogIds = new Set(catalog.map((f: any) => f.id));
+    
+    const validatedItems = (result.items || [])
+      .map((item: any) => {
+        const validCandidates = (item.candidates || []).filter((c: any) => catalogIds.has(c.id));
+        const stems = Math.max(1, Math.min(100, item.stems || 1));
+        
+        return {
+          ...item,
+          stems,
+          candidates: validCandidates
+        };
+      })
+      .filter((item: any) => item.candidates.length > 0 || result.unmatched.includes(item.label));
+
+    if (validatedItems.length === 0 && (result.unmatched || []).length === 0) {
+      return res.status(422).json({ error: 'Không tìm thấy hoa nào hợp lệ trong ảnh.' });
     }
+
+    return res.json({
+      items: validatedItems,
+      unmatched: result.unmatched || []
+    });
+
   } catch (error: any) {
-    console.error('Lỗi server khi phân tích ảnh:', error);
-    return res.status(500).json({ error: 'Lỗi máy chủ khi phân tích ảnh' });
+    console.error('Scan bouquet error:', error);
+    if (error.message?.includes('quota') || error.status === 429) {
+      return res.status(429).json({ error: 'Hết lượt quét AI, thử lại sau.' });
+    }
+    return res.status(500).json({ error: 'Lỗi kết nối máy chủ, vui lòng thử lại.' });
   }
 });
+
 
 // Start Express server and mount Vite in development
 async function startServer() {

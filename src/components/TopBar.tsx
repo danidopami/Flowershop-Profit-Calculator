@@ -1,20 +1,21 @@
-import React from 'react';
-import { Menu, Bell, Plus, Sparkles } from 'lucide-react';
+import { Menu, Bell, Plus, BookmarkCheck } from 'lucide-react';
 
 interface TopBarProps {
   onOpenMobileMenu?: () => void;
   onNewRecipe: () => void;
+  onOpenLibrary?: () => void;
   savedCount: number;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
   onOpenMobileMenu,
   onNewRecipe,
+  onOpenLibrary,
   savedCount,
 }) => {
   return (
     <header className="h-16 border-b border-[#EAE1DA]/70 bg-[#FAF7F3]/90 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between sticky top-0 z-20">
-      {/* Left: Mobile Menu Toggle & Poetic Brand Quote */}
+      {/* Left: Mobile Menu Toggle */}
       <div className="flex items-center gap-3">
         {onOpenMobileMenu && (
           <button
@@ -26,13 +27,25 @@ export const TopBar: React.FC<TopBarProps> = ({
             <Menu className="w-5 h-5" />
           </button>
         )}
-        <div className="hidden sm:block">
-          <p className="text-xs italic text-[#92827C]">"Tiệm hoa nhỏ của 2 người iu nhau"</p>
-        </div>
       </div>
 
       {/* Right: Actions & User Profile */}
-      <div className="flex items-center gap-3 sm:gap-4">
+      <div className="flex items-center gap-2 sm:gap-3">
+        {onOpenLibrary && (
+          <button
+            type="button"
+            onClick={onOpenLibrary}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#392A28] bg-white hover:bg-[#FAF7F3] border border-[#EAE1DA] rounded-xl transition-all shadow-2xs cursor-pointer"
+            title="Mở thư viện mẫu công thức hoa"
+          >
+            <BookmarkCheck className="w-3.5 h-3.5 text-[#B77E79]" />
+            <span className="hidden sm:inline">Thư viện mẫu</span>
+            <span className="px-1.5 py-0.2 text-[10px] font-bold bg-[#B77E79] text-white rounded-full">
+              {savedCount}
+            </span>
+          </button>
+        )}
+
         {/* Quick New Recipe Button */}
         <button
           type="button"

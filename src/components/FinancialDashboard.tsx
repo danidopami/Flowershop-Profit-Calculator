@@ -11,6 +11,8 @@ import {
 import { CostVariables, FinancialBreakdown } from '../types';
 import { formatVND, marginToMarkup } from '../utils/calculator';
 
+import { FlutedBanner } from '../FlutedBanner';
+
 interface FinancialDashboardProps {
   recipeName: string;
   category: string;
@@ -88,7 +90,9 @@ Lợi nhuận dự kiến cả đơn:  ${formatVND(breakdown.netProfit * orderQu
   return (
     <div className="space-y-5">
       {/* Top Deep Olive Luxury Card matching reference screenshot */}
-      <div className="bg-[#48423a] text-[#FAF7F3] rounded-2xl p-6 shadow-md border border-[#3a352f] space-y-5">
+      <div className="bg-[#746C64] text-[#FAF7F3] rounded-2xl p-6 shadow-md border border-white/10 space-y-5 overflow-hidden">
+        <FlutedBanner />
+
         {/* Header: Title + Target Margin Selector */}
         <div className="flex items-center justify-between gap-2 relative">
           <div className="flex items-center gap-2">

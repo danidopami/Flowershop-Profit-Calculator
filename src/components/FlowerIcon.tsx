@@ -2,11 +2,12 @@ import React from 'react';
 
 interface FlowerIconProps {
   name: string;
+  imageUrl?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
 
-export const FlowerIcon: React.FC<FlowerIconProps> = ({ name, size = 'md', className = '' }) => {
+export const FlowerIcon: React.FC<FlowerIconProps> = ({ name, imageUrl, size = 'md', className = '' }) => {
   const firstLetter = name.trim().charAt(0).toUpperCase() || '?';
   
   // Deterministic color based on name
@@ -36,6 +37,16 @@ export const FlowerIcon: React.FC<FlowerIconProps> = ({ name, size = 'md', class
     xl: 'w-14 h-14 text-lg',
   };
   
+  if (imageUrl) {
+    return (
+      <img 
+        src={imageUrl} 
+        alt={name} 
+        className={`${sizeClasses[size]} rounded-full object-cover shrink-0 border border-white/20 shadow-sm ${className}`} 
+      />
+    );
+  }
+
   return (
     <div 
       className={`${sizeClasses[size]} ${bgColor} rounded-full flex items-center justify-center text-white font-bold shadow-sm shrink-0 border border-white/20 ${className}`}
